@@ -79,7 +79,7 @@ private:
         return sig_figs;
     }
 
-    static const inline std::map<const std::uint16_t, const std::string> regexes = {
+    static const inline std::map<std::uint16_t, const std::string> regexes = {
         { 0, std::string("https://[www.]?webex.com/(\\d+)/meeting(\\d+)/user(\\d+)") }
     };
 };

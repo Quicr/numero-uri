@@ -75,20 +75,77 @@ std::string HttpEncoder::DecodeUrl(const std::string &url)
     // Get the template and ignore the first 56 bits and get regex id
     url_details details;
 
-    std::uint32_t idx = Extra_Sig_Figs;
+    std::uint32_t sub_start = Extra_Sig_Figs;
 
-    details.reg_id = std::stoi(url.substr(idx, Bit16_Sig_Figs));
-    idx += Bit16_Sig_Figs;
-    details.pen = std::stoi(url.substr(idx, Bit22_Sig_Figs));
-    idx += Bit22_Sig_Figs;
-    details.pen = std::stoi(url.substr(idx, Bit16_Sig_Figs));
-    idx += Bit16_Sig_Figs;
-    details.pen = std::stoi(url.substr(idx, Bit16_Sig_Figs));
-    idx += Bit16_Sig_Figs;
+    details.reg_id = std::stoi(url.substr(sub_start, Bit16_Sig_Figs));
+    sub_start += Bit16_Sig_Figs;
+    details.pen = std::stoi(url.substr(sub_start, Bit22_Sig_Figs));
+    sub_start += Bit22_Sig_Figs;
+    details.meeting = std::stoi(url.substr(sub_start, Bit16_Sig_Figs));
+    sub_start += Bit16_Sig_Figs;
+    details.user = std::stoi(url.substr(sub_start, Bit16_Sig_Figs));
+    std::cout << details.reg_id << std::endl;
+    std::cout << details.pen << std::endl;
+    std::cout << details.meeting << std::endl;
+    std::cout << details.user << std::endl;
 
     // Scrape out the regex stuff from the template by reading groups
     // replace groups with the appropriate values
-    return "TODO";
+
+    std::string reg = HttpEncoder::regexes.at(details.reg_id);
+    std::string decoded;
+    std::cout << reg << std::endl;
+
+    std::uint32_t idx = 0;
+    std::vector<size_t> group_indices;
+    size_t find;
+    while (idx < reg.length())
+    {
+        if (reg[idx] == '[')
+        {
+            find = reg.find(']', idx);
+            if (find != std::string::npos)
+            {
+                idx = find + 1;
+                continue;
+            }
+        }
+
+        if (reg[idx] == '(')
+        {
+            find = reg.find(')', idx);
+            if (find != std::string::npos)
+            {
+                group_indices.push_back(decoded.length());
+                idx = find + 1;
+                continue;
+            }
+        }
+
+        if (reg[idx] == '?')
+        {
+            idx++;
+            continue;
+        }
+
+        decoded += reg[idx++];
+    }
+
+    for (int i = 0; i < group_indices.size(); i++)
+    {
+        std::cout << group_indices[i] << std::endl;
+    }
+    std::cout << "str len " << decoded.size() << std::endl;
+
+    std::string str_pen = std::to_string(details.pen);
+    std::string str_meeting = std::to_string(details.meeting);
+    std::string str_user = std::to_string(details.user);
+
+    decoded.insert(group_indices[0], str_pen);
+    decoded.insert(group_indices[1] + str_pen.size(), str_meeting);
+    decoded.insert(group_indices[2] + str_pen.size() + str_meeting.size(), str_user);
+
+    return decoded;
 }
 
 HttpEncoder::url_details HttpEncoder::ParseUrl(const std::string &url)
