@@ -1,0 +1,14 @@
+version: '3.7'
+services:
+  webex_http_encoder:
+    container_name: webex_http_encoder
+    image: webex_http_encoder
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    volumes:
+      - ./:/webex_http_encoder
+    command: ./webex_http_encoder
+# TODO
