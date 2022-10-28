@@ -76,7 +76,6 @@ public:
     {
         std::string str;
 
-        char data[2];
         for (std::uint32_t i = 0; i < digits.size(); ++i)
         {
             if (delimiter != '\0' && i != 0 && i % 4 == 0)

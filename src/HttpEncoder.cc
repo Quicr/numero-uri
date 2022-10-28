@@ -11,7 +11,6 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url)
     std::pair<std::uint32_t, url_template> selected_template;
 
     // Find some sort of template and return it
-    std::uint32_t idx = 0;
     for (auto cur_template : templates)
     {
         selected_template = cur_template;
