@@ -3,24 +3,28 @@
 #include <map>
 #include <regex>
 
-#include <iostream>
-
+#include "uint128.hh"
 
 class HttpEncoder
 {
 public:
-    static std::string EncodeUrl(const std::string &url);
-    static std::string DecodeUrl(const std::string &url);
+    static uint128 EncodeUrl(const std::string &url);
+    static std::string DecodeUrl(const uint128 code);
 private:
-    typedef struct {
-        std::uint16_t reg_id;
-        std::uint32_t pen;
-        std::uint16_t meeting;
-        std::uint16_t user;
-    } url_details;
-
-    static url_details ParseUrl(const std::string &url);
     static void ZeroPadString(std::string &str, size_t zeroes);
+
+    static std::uint64_t GetMaxBitValue(uint64_t bits)
+    {
+        std::uint64_t max_value = 1;
+
+        while (bits-- > 1)
+        {
+            max_value = max_value << 1;
+            max_value += 1;
+        }
+
+        return max_value;
+    }
 
     /* Template function that only takes integer datatypes to find the
      * number of zeroes in front depending on the msb to check from
@@ -79,7 +83,23 @@ private:
         return sig_figs;
     }
 
-    static const inline std::map<std::uint16_t, const std::string> regexes = {
-        { 0, std::string("https://[www.]?webex.com/(\\d+)/meeting(\\d+)/user(\\d+)") }
+    typedef struct {
+        std::string url;
+        std::vector<std::uint32_t> bits;
+    } url_template;
+
+    static inline std::map<std::uint32_t, const url_template> templates = {
+        { 11259375,
+            {
+                "https://[www.]?webex.com/(\\d+)/meeting(\\d+)/user(\\d+)",
+                { 24, 16, 16 }
+            }
+        },
+        { 1,
+            {
+                "https://[www.]?webex.com/(\\d+)/(\\d+)/meeting(\\d+)/user(\\d+)",
+                { 24, 16, 16, 16 }
+            }
+        }
     };
 };

@@ -1,107 +1,90 @@
 #include "HttpEncoder.hh"
 
-#include <iostream>
-
-std::string HttpEncoder::EncodeUrl(const std::string &url)
+uint128 HttpEncoder::EncodeUrl(const std::string &url)
 {
-    url_details details = ParseUrl(url);
 
-    size_t num_remaining_zeroes = HttpEncoder::NumPrependZeroes(static_cast<uint64_t>(0), 56);
-    size_t num_reg_id_zeroes = HttpEncoder::NumPrependZeroes(details.reg_id, sizeof(details.reg_id) * 8);
-    size_t num_pen_zeroes = HttpEncoder::NumPrependZeroes(details.pen, 24);
-    size_t num_meeting_zeroes = HttpEncoder::NumPrependZeroes(details.meeting, sizeof(details.meeting) * 8);
-    size_t num_user_zeroes = HttpEncoder::NumPrependZeroes(details.user, sizeof(details.user) * 8);
+    std::vector<std::uint64_t> numerical_groups;
 
-    /* 128 bit integer broken down by the following
-     * 56 bits are zeroes = 17 significant digits
-     * 16 bits register id = 5 significant digits
-     * 24 bits pen = 8 significant digits
-     * 16 bits meeting
-     * 16 bits user
-    **/
-    std::string res;
+    // To extract the 3 groups from each url format
+    std::smatch matches;
 
-    // Of the 128 bits 56 of them are zeroes?
-    ZeroPadString(res, num_remaining_zeroes);
-    std::cout << "res with extra zeroes " << res.length() << " " << res << std::endl;
+    std::pair<std::uint32_t, url_template> selected_template;
 
-    // Since we are calculating the number of prepend zeroes to a value
-    // then we need to append a zero to the string to make it all 17 sig figs
-    res += std::to_string(0);
-    std::cout << "res with extra values " << res.length() << " " << res << std::endl;
+    // Find some sort of template and return it
+    std::uint32_t idx = 0;
+    for (auto cur_template : templates)
+    {
+        selected_template = cur_template;
 
-    // Pad the num of zeroes the the regex id
-    ZeroPadString(res, num_reg_id_zeroes);
-    std::cout << "res with regex zeroes " << res.length() << " " << res << std::endl;
+        // If this is not a match continue to the next regex
+        if (!std::regex_match(url, matches, std::regex(cur_template.second.url)))
+            continue;
 
-    // Place the regex id onto the string
-    res += std::to_string(details.reg_id);
-    std::cout << "res with regex values " << res.length() << " " << res << std::endl;
+        // Skip the first group since its the whole match
+        for (std::uint32_t i = 1; i < matches.size(); i++)
+        {
+            std::uint64_t val = std::stoi(matches[i].str());
+            std::uint64_t bits = cur_template.second.bits[i-1];
+            std::uint64_t max_val = GetMaxBitValue(bits);
 
-    // Pad the num of pen zeroes
-    ZeroPadString(res, num_pen_zeroes);
-    std::cout << "res with pen zeroes " << res.length() << " " << res << std::endl;
+            if (val > max_val)
+            {
+                throw "Error. Out of range. Group " + std::to_string(i)
+                    + " value is " + std::to_string(val)
+                    + " but the max value is " + std::to_string(max_val);
+            }
 
-    // Place the pen onto the string
-    res += std::to_string(details.pen);
-    std::cout << "res with pen value " << res.length() << " " << res << std::endl;
+            // Keep track of each numerical group
+            numerical_groups.push_back(val);
+        }
 
-    // Pad the num of meeting zeroes
-    ZeroPadString(res, num_meeting_zeroes);
-    std::cout << "res with meeting zeroes " << res.length() << " " << res << std::endl;
+        // Break out after found a regex match
+        break;
+    }
 
-    // Place the meeting number onto the string
-    res += std::to_string(details.meeting);
-    std::cout << "res with meeting value " << res.length() << " " << res << std::endl;
+    uint128 encoded;
+    std::uint32_t offset_bits = 0;
+    std::uint32_t bits = 0;
+    for (std::uint32_t i = 0; i < numerical_groups.size(); ++i)
+    {
+        // Get the amount of bits in the parallel array in numerical groups
+        bits = selected_template.second.bits[i];
 
-    // Pad the num of user zeroes
-    ZeroPadString(res, num_user_zeroes);
-    std::cout << "res with user zeroes " << res.length() << " " << res << std::endl;
+        // Set the value in the uint128 variable
+        encoded.SetValue(numerical_groups[i], bits, offset_bits);
 
-    // Place the user number onto the string
-    res += std::to_string(details.user);
-    std::cout << "res with user value " << res.length() << " " << res << std::endl;
+        // Slide the bit window over
+        offset_bits += bits;
+    }
 
-    return res;
+    return encoded;
 }
 
-std::string HttpEncoder::DecodeUrl(const std::string &url)
+std::string HttpEncoder::DecodeUrl(const uint128 code)
 {
-    // Consts
-    const std::uint32_t Extra_Sig_Figs = 17;
-    const std::uint32_t Bit16_Sig_Figs = 5;
-    const std::uint32_t Bit22_Sig_Figs = 8;
+    const std::uint32_t Pen_Bits = 24;
 
-    // Get the template and ignore the first 56 bits and get regex id
-    url_details details;
-
-    std::uint32_t sub_start = Extra_Sig_Figs;
-
-    details.reg_id = std::stoi(url.substr(sub_start, Bit16_Sig_Figs));
-    sub_start += Bit16_Sig_Figs;
-    details.pen = std::stoi(url.substr(sub_start, Bit22_Sig_Figs));
-    sub_start += Bit22_Sig_Figs;
-    details.meeting = std::stoi(url.substr(sub_start, Bit16_Sig_Figs));
-    sub_start += Bit16_Sig_Figs;
-    details.user = std::stoi(url.substr(sub_start, Bit16_Sig_Figs));
-    std::cout << details.reg_id << std::endl;
-    std::cout << details.pen << std::endl;
-    std::cout << details.meeting << std::endl;
-    std::cout << details.user << std::endl;
-
-    // Scrape out the regex stuff from the template by reading groups
-    // replace groups with the appropriate values
-
-    std::string reg = HttpEncoder::regexes.at(details.reg_id);
     std::string decoded;
-    std::cout << reg << std::endl;
+
+    // Assumed that the first 24 bits is always the PEN
+    std::uint64_t pen = code.GetValue(Pen_Bits, 0);
+
+    // Get the template for that PEN
+    auto temp = templates[pen];
+
+    // Get the regex
+    auto reg = temp.url;
 
     std::uint32_t idx = 0;
-    std::vector<size_t> group_indices;
-    size_t find;
-    while (idx < reg.length())
+    std::vector<std::uint32_t> group_indices;
+    char ch;
+    size_t find = 0;
+    while (idx < reg.size())
     {
-        if (reg[idx] == '[')
+        ch = reg[idx];
+
+        // Find and ignore optional brackets
+        if (ch == '[')
         {
             find = reg.find(']', idx);
             if (find != std::string::npos)
@@ -111,7 +94,8 @@ std::string HttpEncoder::DecodeUrl(const std::string &url)
             }
         }
 
-        if (reg[idx] == '(')
+        // Find and groups and make note of them
+        if (ch == '(')
         {
             find = reg.find(')', idx);
             if (find != std::string::npos)
@@ -122,92 +106,42 @@ std::string HttpEncoder::DecodeUrl(const std::string &url)
             }
         }
 
-        if (reg[idx] == '?')
+        // Skip over question marks
+        if (ch == '?')
         {
             idx++;
             continue;
         }
 
-        decoded += reg[idx++];
+        decoded += ch;
+        ++idx;
     }
 
-    for (int i = 0; i < group_indices.size(); i++)
+    std::uint32_t num_bits;
+    std::uint32_t str_offset = 0;
+    std::uint32_t insert_idx;
+    std::string insert_str;
+    std::uint32_t bit_offset = 0;
+    for (std::uint32_t i = 0; i < group_indices.size(); i++)
     {
-        std::cout << group_indices[i] << std::endl;
+        // Get the number of bits for this number
+        num_bits = temp.bits[i];
+
+        // Calc how much we've inserted into the string
+        str_offset += insert_str.length();
+
+        // Get the idx with an offset
+        insert_idx = group_indices[i] + str_offset;
+
+        // Get the bits converted into decimal
+        insert_str = std::to_string(code.GetValue(num_bits, bit_offset));
+
+        // Add the number of bits that was read
+        bit_offset += num_bits;
+
+        // Insert the numeric values into the decoded string
+        decoded.insert(insert_idx, insert_str);
     }
-    std::cout << "str len " << decoded.size() << std::endl;
-
-    std::string str_pen = std::to_string(details.pen);
-    std::string str_meeting = std::to_string(details.meeting);
-    std::string str_user = std::to_string(details.user);
-
-    decoded.insert(group_indices[0], str_pen);
-    decoded.insert(group_indices[1] + str_pen.size(), str_meeting);
-    decoded.insert(group_indices[2] + str_pen.size() + str_meeting.size(), str_user);
 
     return decoded;
-}
-
-HttpEncoder::url_details HttpEncoder::ParseUrl(const std::string &url)
-{
-    constexpr size_t Pen_Group = 1;
-    constexpr size_t Meeting_Group = 2;
-    constexpr size_t User_Group = 3;
-
-    // The details we'll need for the url
-    url_details details;
-
-    // To extract the 3 groups from each url format
-    std::smatch matches;
-
-    // For error checking and too large of numbers
-    uint64_t tmp_pen;
-    uint32_t tmp_meeting;
-    uint32_t tmp_user;
-
-    bool match = false;
-
-    // Find some sort of template and return it
-    for (auto reg : regexes)
-    {
-        // If this is not a match continue to the next regex
-        if (!std::regex_match(url, matches, std::regex(reg.second))) continue;
-
-        tmp_pen = atoi(matches[Pen_Group].str().c_str());
-        tmp_meeting = atoi(matches[Meeting_Group].str().c_str());
-        tmp_user = atoi(matches[User_Group].str().c_str());
-
-        // Ensure that the value is not greater than an 24 bit int
-        if (tmp_pen > 0xFFFFFF)
-            throw "PEN ID is outside of the acceptable range";
-
-        if (tmp_meeting > UINT16_MAX)
-            throw "Meeting ID is outside of the acceptable range";
-
-        if (tmp_user > UINT16_MAX)
-            throw "User ID is outside of the acceptable range";
-
-        // Now that we have checked the values can fill in the details
-        details.reg_id = reg.first;
-        details.pen = tmp_pen;
-        details.meeting = tmp_meeting;
-        details.user = tmp_user;
-
-        match = true;
-
-        break;
-    }
-
-    if (!match)
-        throw "No template found for the given input";
-
-    return details;
-}
-
-void HttpEncoder::ZeroPadString(std::string &str, size_t zeroes)
-{
-    while (zeroes-- > 0)
-    {
-        str.append("0");
-    }
 }
