@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+
 #define MAX_SIZE 128
 
 class uint128
@@ -10,10 +12,7 @@ class uint128
 public:
     uint128()
     {
-        for (uint16_t i = 0; i < MAX_SIZE; ++i)
-        {
-            digits.push_back(0);
-        }
+        InitDigits();
     }
 
     // TODO remove?
@@ -21,12 +20,16 @@ public:
               std::uint16_t num_bits,
               std::uint16_t msb_offset)
     {
-        for (uint16_t i = 0; i < MAX_SIZE; ++i)
-        {
-            digits.push_back(0);
-        }
+        InitDigits();
 
         SetValue(value, num_bits, msb_offset);
+    }
+
+    uint128(std::string str_in, std::uint32_t bit_format=64)
+    {
+        InitDigits();
+
+        FromString(str_in, bit_format);
     }
 
     // TODO template this?
@@ -72,7 +75,61 @@ public:
         return val;
     }
 
-    std::string ToString(char delimiter='\0') const
+    // Expects raw string with no delimiters
+    void FromString(const std::string str_in,
+                    const std::uint32_t bit_format=64)
+    {
+        if (bit_format > 64)
+            throw "bit_format cannot be greater than 64";
+        if (128 % bit_format != 0)
+            throw "bit_format must be a factor of 128 that is less than 64";
+
+        // Clear the bits in case this is happening not as an init
+        Clear();
+
+        // TODO move into a bit helper for finding sig figs
+        std::uint64_t max_value = 1;
+        std::uint32_t bits = bit_format;
+        while (bits-- > 1)
+        {
+            max_value = max_value << 1;
+            max_value += 1;
+        }
+        std::uint64_t sig_figs = 0;
+        while (max_value > 0)
+        {
+            max_value /= 10;
+            sig_figs++;
+        }
+        // END TODO
+
+        std::uint32_t groupings = (128/bit_format) - 1;
+        std::uint32_t group = 0;
+
+        std::uint64_t val;
+        std::uint32_t str_offset = 0;
+        std::uint32_t idx;
+        std::uint32_t lower_bound = 0;
+        while (group < groupings)
+        {
+            val = std::stoull(str_in.substr(str_offset, sig_figs));
+            str_offset += sig_figs;
+
+            // Push the value into the vector
+            idx = ((bit_format) + (bit_format * group));
+            while (idx-- != lower_bound)
+            {
+                // std::cout << idx << " " << lower_bound << std::endl;
+                digits[idx] = ((val & 0x1) == 0x1);
+                val = val >> 1;
+            }
+            lower_bound += bit_format;
+
+            group++;
+        }
+    }
+
+    std::string ToBinaryString(const char delimiter='\0') const
     {
         std::string str;
 
@@ -89,6 +146,45 @@ public:
         return str;
     }
 
+    std::string ToDecimalString(const char delimiter='\0',
+                                const std::uint32_t bit_format=64) const
+    {
+        if (bit_format > 64)
+            throw "bit_format cannot be greater than 64";
+        if (128 % bit_format != 0)
+            throw "bit_format must be a factor of 128 that is less than 64";
+
+        std::string str;
+
+        std::uint32_t num_numbers = 128 / bit_format;
+
+        std::uint64_t value;
+        std::uint32_t iter;
+        std::uint32_t idx = 0;
+        std::uint64_t add_zeroes = 0;
+        while (num_numbers-- > 0)
+        {
+            value = 0;
+            iter = 0;
+            while (iter < bit_format && idx < MAX_SIZE)
+            {
+                value = value << 1;
+                value += digits[idx++];
+                ++iter;
+            }
+
+            add_zeroes = NumPrependZeroes(value, bit_format);
+
+            while (add_zeroes-- != 0)
+            {
+                str += '0';
+            }
+
+            str += std::to_string(value);
+        }
+        return str;
+    }
+
     void Clear()
     {
         for (std::uint32_t i = 0; i < digits.size(); ++i)
@@ -98,5 +194,50 @@ public:
     }
 
 private:
+    std::uint64_t NumPrependZeroes(std::uint64_t value,
+                                   const std::uint64_t num_bits) const
+    {
+        // If the value is a zero make it 1 for the
+        // number of prepend zeroes that would precede the value
+        // Even though its zero
+        if (value == 0) value = 1;
+
+        // Get the max number for this type
+        std::uint64_t max_num = 1;
+        std::uint64_t size = num_bits;
+        while (size-- > 1)
+        {
+            max_num = max_num << 1;
+            max_num += 1;
+        }
+
+        // Now that we know the max value we can see how many sigfigs it has
+        std::uint64_t sig_figs = 0;
+        while (max_num > 0)
+        {
+            max_num /= 10;
+            sig_figs++;
+        }
+
+        // Now that we know the sig figs we can count down how
+        // many zeroes we need
+        while (value > 0 && sig_figs > 0)
+        {
+            value /= 10;
+            sig_figs--;
+        }
+
+        return sig_figs;
+    }
+
+    void InitDigits()
+    {
+        for (std::uint32_t i = 0; i < MAX_SIZE; i++)
+        {
+            digits.push_back(0);
+        }
+    }
+
+
     std::vector<std::uint8_t> digits;
 };

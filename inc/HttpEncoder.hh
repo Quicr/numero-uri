@@ -11,10 +11,12 @@ class HttpEncoder
 {
 public:
     static uint128 EncodeUrl(const std::string &url);
-    static std::string DecodeUrl(const uint128 code);
+    static std::string DecodeUrl(const std::string code_str,
+                                 const std::uint32_t bit_format=64);
 private:
     static void ZeroPadString(std::string &str, size_t zeroes);
 
+    // TODO move into a bit helper
     static std::uint64_t GetMaxBitValue(uint64_t bits)
     {
         std::uint64_t max_value = 1;
@@ -90,6 +92,7 @@ private:
         std::vector<std::uint32_t> bits;
     } url_template;
 
+    // TODO load these in from some sort of file?
     static inline std::map<std::uint32_t, const url_template> templates = {
         { 11259375,
             {

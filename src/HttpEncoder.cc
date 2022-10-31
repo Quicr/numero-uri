@@ -1,5 +1,7 @@
 #include "HttpEncoder.hh"
 
+#include <iostream>
+
 uint128 HttpEncoder::EncodeUrl(const std::string &url)
 {
 
@@ -59,9 +61,18 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url)
     return encoded;
 }
 
-std::string HttpEncoder::DecodeUrl(const uint128 code)
+std::string HttpEncoder::DecodeUrl(const std::string code_str,
+                                   const std::uint32_t bit_format)
 {
+    if (bit_format > 64)
+        throw "bit_format cannot be greater than 64";
+    if (128 % bit_format != 0)
+        throw "bit_format must be a factor of 128 that is less than 64";
+
     const std::uint32_t Pen_Bits = 24;
+
+    // Convert the string to the uint128
+    uint128 code(code_str, bit_format);
 
     std::string decoded;
 
