@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "NumericHelper.hh"
+
 uint128 HttpEncoder::EncodeUrl(const std::string &url)
 {
 
@@ -26,7 +28,7 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url)
         {
             std::uint64_t val = std::stoi(matches[i].str());
             std::uint64_t bits = cur_template.second.bits[i-1];
-            std::uint64_t max_val = GetMaxBitValue(bits);
+            std::uint64_t max_val = NumericHelper::MaxValue(bits);
 
             if (val > max_val)
             {
@@ -80,10 +82,10 @@ std::string HttpEncoder::DecodeUrl(const std::string code_str,
     std::uint64_t pen = code.GetValue(Pen_Bits, 0);
 
     // Get the template for that PEN
-    auto temp = templates[pen];
+    HttpEncoder::url_template temp = templates[pen];
 
     // Get the regex
-    auto reg = temp.url;
+    std::string reg = temp.url;
 
     std::uint32_t idx = 0;
     std::vector<std::uint32_t> group_indices;

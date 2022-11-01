@@ -16,20 +16,6 @@ public:
 private:
     static void ZeroPadString(std::string &str, size_t zeroes);
 
-    // TODO move into a bit helper
-    static std::uint64_t GetMaxBitValue(uint64_t bits)
-    {
-        std::uint64_t max_value = 1;
-
-        while (bits-- > 1)
-        {
-            max_value = max_value << 1;
-            max_value += 1;
-        }
-
-        return max_value;
-    }
-
     /* Template function that only takes integer datatypes to find the
      * number of zeroes in front depending on the msb to check from
      * -- value - The number you are looking for zeroes in front of

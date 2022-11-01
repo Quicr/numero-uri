@@ -5,6 +5,8 @@
 
 #include <iostream>
 
+#include "NumericHelper.hh"
+
 #define MAX_SIZE 128
 
 class uint128
@@ -87,21 +89,9 @@ public:
         // Clear the bits in case this is happening not as an init
         Clear();
 
-        // TODO move into a bit helper for finding sig figs
-        std::uint64_t max_value = 1;
-        std::uint32_t bits = bit_format;
-        while (bits-- > 1)
-        {
-            max_value = max_value << 1;
-            max_value += 1;
-        }
-        std::uint64_t sig_figs = 0;
-        while (max_value > 0)
-        {
-            max_value /= 10;
-            sig_figs++;
-        }
-        // END TODO
+        // Get the sig figs for the bit format
+        std::uint64_t sig_figs = NumericHelper::SigFigs(
+            NumericHelper::MaxValue(bit_format));
 
         std::uint32_t groupings = (128/bit_format) - 1;
         std::uint32_t group = 0;
@@ -112,6 +102,7 @@ public:
         std::uint32_t lower_bound = 0;
         while (group < groupings)
         {
+            // Get the value from the string of sig_fig digits
             val = std::stoull(str_in.substr(str_offset, sig_figs));
             str_offset += sig_figs;
 
@@ -119,7 +110,6 @@ public:
             idx = ((bit_format) + (bit_format * group));
             while (idx-- != lower_bound)
             {
-                // std::cout << idx << " " << lower_bound << std::endl;
                 digits[idx] = ((val & 0x1) == 0x1);
                 val = val >> 1;
             }
