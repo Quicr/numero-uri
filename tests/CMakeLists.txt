@@ -11,14 +11,5 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(googletest)
 
-add_executable(HttpEncoderTest HttpEncoderTest.cc)
-
-target_link_libraries(HttpEncoderTest PUBLIC
-webex_http_encoder
-gtest_main
-)
-
-add_test(
-    NAME HttpEncoderTest
-    COMMAND HttpEncoderTest
-)
+add_subdirectory(test_http_encoder)
+add_subdirectory(test_uint128)

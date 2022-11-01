@@ -1,18 +1,17 @@
 #include "HttpEncoder.hh"
 
-#include <iostream>
 
 #include "NumericHelper.hh"
 
 uint128 HttpEncoder::EncodeUrl(const std::string &url)
 {
-
     std::vector<std::uint64_t> numerical_groups;
 
     // To extract the 3 groups from each url format
     std::smatch matches;
 
     std::pair<std::uint32_t, url_template> selected_template;
+    bool matched = false;
 
     // Find some sort of template and return it
     for (auto cur_template : templates)
@@ -23,6 +22,7 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url)
         if (!std::regex_match(url, matches, std::regex(cur_template.second.url)))
             continue;
 
+        matched = true;
         // Skip the first group since its the whole match
         for (std::uint32_t i = 1; i < matches.size(); i++)
         {
@@ -32,9 +32,11 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url)
 
             if (val > max_val)
             {
-                throw "Error. Out of range. Group " + std::to_string(i)
+                throw HttpEncodeOutOfRangeException(
+                    "Error. Out of range. Group " + std::to_string(i)
                     + " value is " + std::to_string(val)
-                    + " but the max value is " + std::to_string(max_val);
+                    + " but the max value is " + std::to_string(max_val),
+                    i, val);
             }
 
             // Keep track of each numerical group
@@ -44,6 +46,9 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url)
         // Break out after found a regex match
         break;
     }
+
+    if (!matched)
+        throw HttpEncodeNoMatchException("No match for url: " + url);
 
     uint128 encoded;
     std::uint32_t offset_bits = 0;
@@ -66,11 +71,6 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url)
 std::string HttpEncoder::DecodeUrl(const std::string code_str,
                                    const std::uint32_t bit_format)
 {
-    if (bit_format > 64)
-        throw "bit_format cannot be greater than 64";
-    if (128 % bit_format != 0)
-        throw "bit_format must be a factor of 128 that is less than 64";
-
     const std::uint32_t Pen_Bits = 24;
 
     // Convert the string to the uint128
@@ -80,6 +80,11 @@ std::string HttpEncoder::DecodeUrl(const std::string code_str,
 
     // Assumed that the first 24 bits is always the PEN
     std::uint64_t pen = code.GetValue(Pen_Bits, 0);
+
+    // Check if pen exists in list of templates
+    if (templates.find(pen) == templates.end())
+        throw HttpDecodeNoMatchException(
+            "Error. No templates matches the found PEN " + std::to_string(pen));
 
     // Get the template for that PEN
     HttpEncoder::url_template temp = templates[pen];

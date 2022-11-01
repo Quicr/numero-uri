@@ -8,7 +8,7 @@ int main()
     try
     {
         // Get the url
-        std::string url = "https://webex.com/11259375/meeting1234/user3213";
+        std::string url = "https://webex.com/1/123/meeting1234/user3213";
 
         // Encode
         uint128 encoded = HttpEncoder::EncodeUrl(url);
@@ -28,12 +28,8 @@ int main()
     {
         std::cout << ex.what() << std::endl;
     }
-    catch (const std::string &ex)
+    catch (const std::runtime_error &ex)
     {
-        std::cout << ex << std::endl;
-    }
-    catch (const char *ex)
-    {
-        std::cout << ex << std::endl;
+        std::cout << ex.what() << std::endl;
     }
 }
