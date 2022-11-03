@@ -6,6 +6,21 @@
 #include <regex>
 
 #include "uint128.hh"
+#include "UrlTemplater.hh"
+
+class HttpEncoderException : public std::runtime_error
+{
+public:
+    explicit HttpEncoderException(const std::string &what_arg) :
+        std::runtime_error(what_arg)
+    {
+    }
+
+    explicit HttpEncoderException(const char *what_arg) :
+        std::runtime_error(what_arg)
+    {
+    }
+};
 
 class HttpEncodeOutOfRangeException : public std::runtime_error
 {
@@ -74,17 +89,17 @@ public:
 class HttpEncoder
 {
 public:
-    static uint128 EncodeUrl(const std::string &url);
-    static std::string DecodeUrl(const std::string code_str,
+
+    HttpEncoder() {};
+    HttpEncoder(std::string template_filename);
+    HttpEncoder(UrlTemplater::template_list templates);
+    uint128 EncodeUrl(const std::string &url);
+    std::string DecodeUrl(const std::string code_str,
                                  const std::uint32_t bit_format=64);
 private:
-    typedef struct {
-        std::string url;
-        std::vector<std::uint32_t> bits;
-    } url_template;
 
     // TODO load these in from some sort of file?
-    static inline std::map<std::uint32_t, const url_template> templates = {
+    UrlTemplater::template_list templates = {
         { 11259375,
             {
                 "https://[www.]?webex.com/(\\d+)/meeting(\\d+)/user(\\d+)",

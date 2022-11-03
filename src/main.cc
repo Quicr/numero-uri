@@ -7,11 +7,14 @@ int main()
 {
     try
     {
+        // filename
+        std::string filename = "./files/templates.json";
         // Get the url
         std::string url = "https://webex.com/1/123/meeting1234/user3213";
 
         // Encode
-        uint128 encoded = HttpEncoder::EncodeUrl(url);
+        HttpEncoder encoder;
+        uint128 encoded = encoder.EncodeUrl(url);
         std::cout << "Encoded size - "
                   << encoded.ToDecimalString().size()
                   << "\nEncoded val - "
@@ -21,7 +24,7 @@ int main()
                   << "\n";
 
         // Decode
-        std::string decoded = HttpEncoder::DecodeUrl(encoded.ToDecimalString());
+        std::string decoded = encoder.DecodeUrl(encoded.ToDecimalString());
         std::cout << "Decoded " << decoded << "\n";
     }
     catch (const std::invalid_argument &ex)

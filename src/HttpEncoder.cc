@@ -1,7 +1,22 @@
 #include "HttpEncoder.hh"
 
+#include <fstream>
 
 #include "NumericHelper.hh"
+
+HttpEncoder::HttpEncoder(std::string templates_file)
+{
+    // TODO try catch
+    std::ifstream file;
+    file.open(templates_file);
+    if (!file.is_open())
+        throw HttpEncoderException("Couldn't open file");
+}
+
+HttpEncoder::HttpEncoder(template_list templates) : templates(templates)
+{
+
+}
 
 uint128 HttpEncoder::EncodeUrl(const std::string &url)
 {
