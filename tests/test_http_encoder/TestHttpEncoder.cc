@@ -1,71 +1,88 @@
 #include <gtest/gtest.h>
-
+#include "UrlTemplater.hh"
 #include "HttpEncoder.hh"
 #include "uint128.hh"
 
 namespace
 {
-    TEST(TestHttpEncoder, Encode)
+    class TestHttpEncoder : public ::testing::Test
+    {
+    protected:
+        TestHttpEncoder()
+        {
+            templater.Add("https://www.?webex.com/<int24=1>/meeting<int16>/user<int16>");
+        }
+
+        ~TestHttpEncoder() = default;
+
+        HttpEncoder encoder;
+        UrlTemplater templater;
+    };
+
+    TEST_F(TestHttpEncoder, Encode)
     {
         std::string url = "https://webex.com/11259375/meeting1234/user3213";
 
-        uint128 encoded = HttpEncoder::EncodeUrl(url);
+        uint128 encoded = encoder.EncodeUrl(url, templater.GetTemplates());
         std::string res = encoded.ToDecimalString();
         std::string actual = "1237981375469430707200000000000000000000";
         ASSERT_EQ(res, actual);
     }
 
-    TEST(TestHttpEncoder, EncodingOutOfRangeError)
+    TEST_F(TestHttpEncoder, EncodingOutOfRangeError)
     {
         EXPECT_THROW({
             std::string url = "https://webex.com/11259375/meeting65536/user3213";
-            HttpEncoder::EncodeUrl(url);
+            uint128 encoded = encoder.EncodeUrl(url, templater.GetTemplates());
         }, HttpEncodeOutOfRangeException);
     }
 
-    TEST(TestHttpEncoder, EncodingNoMatchError)
+    TEST_F(TestHttpEncoder, EncodingNoMatchError)
     {
         EXPECT_THROW({
             std::string url = "https://webex.com/123/12312/3232/meeting2132/user3213";
-            HttpEncoder::EncodeUrl(url);
+            uint128 encoded = encoder.EncodeUrl(url, templater.GetTemplates());
         }, HttpEncodeNoMatchException);
     }
 
-    TEST(TestHttpEncoder, Decode)
+    TEST_F(TestHttpEncoder, Decode)
     {
+        // Put the new template into the templater
+        templater.Add("https://webex.com/<int24=1>/<int16>/meeting<int16>/user<int16>");
+
         std::string actual = "https://webex.com/1/123/meeting555/user777";
         std::string encoded = "0000000110157536742700648518346341351424";
-        std::string decoded = HttpEncoder::DecodeUrl(encoded);
+        std::string decoded = encoder.DecodeUrl(encoded, templater.GetTemplates());
         ASSERT_EQ(decoded, actual);
     }
 
-    TEST(TestHttpEncoder, DecodingErrors)
+    TEST_F(TestHttpEncoder, DecodingErrors)
     {
         EXPECT_THROW({
             std::string url = "https://webex.com/11259375/meeting1234/user3213";
 
-            uint128 encoded = HttpEncoder::EncodeUrl(url);
+            uint128 encoded = encoder.EncodeUrl(url, templater.GetTemplates());
             std::string res = encoded.ToDecimalString();
 
-            std::string decoded = HttpEncoder::DecodeUrl(res, 65);
+            std::string decoded = encoder.DecodeUrl(res, templater.GetTemplates(), 65);
         }, uint128Exception);
 
         EXPECT_THROW({
             std::string url = "https://webex.com/11259375/meeting1234/user3213";
 
-            uint128 encoded = HttpEncoder::EncodeUrl(url);
+            uint128 encoded = encoder.EncodeUrl(url, templater.GetTemplates());
             std::string res = encoded.ToDecimalString();
 
-            std::string decoded = HttpEncoder::DecodeUrl(res, 33);
+            std::string decoded = encoder.DecodeUrl(res, templater.GetTemplates(), 33);
         }, uint128Exception);
 
         EXPECT_THROW({
             std::string url = "https://webex.com/2/meeting1234/user3213";
 
-            uint128 encoded = HttpEncoder::EncodeUrl(url);
+            uint128 encoded = encoder.EncodeUrl(url, templater.GetTemplates());
             std::string res = encoded.ToDecimalString();
 
-            std::string decoded = HttpEncoder::DecodeUrl(res);
+            std::string decoded = encoder.DecodeUrl(res, templater.GetTemplates());
         }, HttpDecodeNoMatchException);
     }
 }

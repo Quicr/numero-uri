@@ -4,32 +4,24 @@
 
 #include "NumericHelper.hh"
 
-HttpEncoder::HttpEncoder(std::string templates_file)
+uint128 HttpEncoder::EncodeUrl(const std::string &url,
+                               const UrlTemplater::template_list& template_list)
 {
-    // TODO try catch
-    std::ifstream file;
-    file.open(templates_file);
-    if (!file.is_open())
-        throw HttpEncoderException("Couldn't open file");
-}
+    // TODO there is a bug here..
+    // Originally we just cycled through the templates
+    // but now we need to read the PEN value and check if it is
+    // in the templates.
 
-HttpEncoder::HttpEncoder(template_list templates) : templates(templates)
-{
-
-}
-
-uint128 HttpEncoder::EncodeUrl(const std::string &url)
-{
     std::vector<std::uint64_t> numerical_groups;
 
     // To extract the 3 groups from each url format
     std::smatch matches;
 
-    std::pair<std::uint32_t, url_template> selected_template;
+    std::pair<std::uint32_t, UrlTemplater::url_template> selected_template;
     bool matched = false;
 
     // Find some sort of template and return it
-    for (auto cur_template : templates)
+    for (auto cur_template : template_list)
     {
         selected_template = cur_template;
 
@@ -84,7 +76,8 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url)
 }
 
 std::string HttpEncoder::DecodeUrl(const std::string code_str,
-                                   const std::uint32_t bit_format)
+    const UrlTemplater::template_list& template_list,
+    const std::uint32_t bit_format)
 {
     const std::uint32_t Pen_Bits = 24;
 
@@ -97,12 +90,12 @@ std::string HttpEncoder::DecodeUrl(const std::string code_str,
     std::uint64_t pen = code.GetValue(Pen_Bits, 0);
 
     // Check if pen exists in list of templates
-    if (templates.find(pen) == templates.end())
+    if (template_list.find(pen) == template_list.end())
         throw HttpDecodeNoMatchException(
             "Error. No templates matches the found PEN " + std::to_string(pen));
 
     // Get the template for that PEN
-    HttpEncoder::url_template temp = templates[pen];
+    UrlTemplater::url_template temp = template_list.at(pen);
 
     // Get the regex
     std::string reg = temp.url;
@@ -129,6 +122,13 @@ std::string HttpEncoder::DecodeUrl(const std::string code_str,
         // Find and groups and make note of them
         if (ch == '(')
         {
+            // Check the next couple characters for non matching-groups
+            if (idx + 3 < reg.size() && reg[idx+1] == '?' && reg[idx+2] == ':')
+            {
+                idx += 3;
+                continue;
+            }
+
             find = reg.find(')', idx);
             if (find != std::string::npos)
             {
@@ -138,8 +138,8 @@ std::string HttpEncoder::DecodeUrl(const std::string code_str,
             }
         }
 
-        // Skip over question marks
-        if (ch == '?')
+        // Skip over ?, ^, $, \, )
+        if (ch == '?' || ch == '^' || ch == '$' || ch == '\\' || ch == ')')
         {
             idx++;
             continue;

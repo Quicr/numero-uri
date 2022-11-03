@@ -1,9 +1,12 @@
-#pragma once
+#ifndef URLTEMPLATER_H
+#define URLTEMPLATER_H
 
 #include <string>
+#include <vector>
 #include <map>
+#include <stdexcept>
 
-class UrlTemplaterException : std::runtime_error
+class UrlTemplaterException : public std::runtime_error
 {
 public:
     explicit UrlTemplaterException(const std::string &what_arg) :
@@ -25,12 +28,17 @@ public:
         std::vector<std::uint32_t> bits;
     } url_template;
 
-    typedef std::map<std::uint32_t, const url_template> template_list;
+    typedef std::map<std::uint32_t, url_template> template_list;
 
+    UrlTemplater();
     UrlTemplater(std::string template_file);
     bool Add(std::string new_template);
     bool Remove(std::uint32_t key);
+    bool LoadTemplates(std::string filename);
+    const template_list& GetTemplates() const;
 private:
     std::string filename;
     template_list templates;
 };
+
+#endif

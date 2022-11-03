@@ -1,6 +1,12 @@
 #include "UrlTemplater.hh"
 
 #include <regex>
+#include <iostream>
+
+UrlTemplater::UrlTemplater()
+{
+
+}
 
 UrlTemplater::UrlTemplater(std::string template_file)
     : filename(template_file)
@@ -13,7 +19,7 @@ bool UrlTemplater::Add(std::string new_template)
     // The first value must be filled in with their PEN
     // Example http://www?.webex.com/<int24=77>/meeting<int16>/user<int16>
     const std::string example =
-        "http://www?.webex.com/<int24=777>/meeting<int16>/user<int16>";
+        "http://www.?webex.com/<int24=777>/meeting<int16>/user<int16>";
 
     // TODO if there is a question mark put it into a non-capturing group
     const std::string optional_www_regex = "(?:www\\.)?";
@@ -27,18 +33,21 @@ bool UrlTemplater::Add(std::string new_template)
     url_template temp;
 
     // Find the first angle bracket
-    std::size_t start = new_template.find('<');
+    std::size_t start = new_template.find('<') + 1;
     std::size_t end = 0;
 
     // Start the regex match string
     temp.url = '^';
 
     // Put everything up to the first option into the regex
-    temp.url += new_template.substr(0, start);
+    temp.url += new_template.substr(0, start-1);
 
-    std::uint32_t www_start = temp.url.find("www?");
-    if (www_start == std::string::npos)
-        temp.url.replace(www_start, 4, optional_www_regex);
+    // TODO this should be a little more robust?
+    std::size_t www_start = temp.url.find("www.?");
+    if (www_start != std::string::npos)
+    {
+        temp.url.replace(www_start, 5, optional_www_regex);
+    }
 
     // TODO maybe need to check for a / between the (\\d+)?
     // Add the regex for a digit
@@ -47,9 +56,8 @@ bool UrlTemplater::Add(std::string new_template)
     // Get the pen from the string
     end = new_template.find('>', start);
     std::string group_str = new_template.substr(start, end-start);
-
     // Get the match the pen to the regex
-    if (std::regex_match(group_str, matches, bit_group_regex))
+    if (!std::regex_match(group_str, matches, bit_group_regex))
     {
         std::string msg = "Error. Missing bit definition for PEN.";
         msg += " Example: " + example;
@@ -79,16 +87,17 @@ bool UrlTemplater::Add(std::string new_template)
         // Get the substr after the = character
         pen_value = std::stoull(matches[2].str().substr(1));
     }
-    catch(std::out_of_range)
+    catch(std::out_of_range &ex)
     {
         std::string msg = "Error. PEN value is too large for a 64 bit number";
         msg += " PEN value found = " + matches[2].str();
+        throw msg;
     }
 
     temp.bits.push_back(pen_bit);
 
     // Start from the end of the PEN group
-    start = end;
+    start = end + 1;
     char ch;
     while (start < new_template.length())
     {
@@ -114,7 +123,10 @@ bool UrlTemplater::Add(std::string new_template)
 
             // Get the bits from the match
             temp.bits.push_back(std::stoull(matches[1].str()));
-            start = end;
+            start = end + 1;
+
+            // Push regex onto the string
+            temp.url += ("(\\d+)");
             continue;
         }
 
@@ -124,12 +136,25 @@ bool UrlTemplater::Add(std::string new_template)
     // Close the entire string
     temp.url += '$';
 
+    templates[pen_value] = temp;
+
     return true;
 }
 
 bool UrlTemplater::Remove(std::uint32_t key)
 {
+// TODO
+    return false;
+}
+
+bool UrlTemplater::LoadTemplates(std::string filename)
+{
+// TODO
 
     return false;
 }
 
+const UrlTemplater::template_list& UrlTemplater::GetTemplates() const
+{
+    return templates;
+}
