@@ -17,53 +17,56 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url,
     // To extract the 3 groups from each url format
     std::smatch matches;
 
-    std::pair<std::uint32_t, UrlTemplater::url_template> selected_template;
+    UrlTemplater::url_template selected_template;
     bool matched = false;
 
-    // Find some sort of template and return it
-    for (auto cur_template : template_list)
+    // Get the pen from the URL
+    if (!std::regex_match(url, matches, std::regex("(\\d+)")))
     {
-        selected_template = cur_template;
-
-        // If this is not a match continue to the next regex
-        if (!std::regex_match(url, matches, std::regex(cur_template.second.url)))
-            continue;
-
-        matched = true;
-        // Skip the first group since its the whole match
-        for (std::uint32_t i = 1; i < matches.size(); i++)
-        {
-            std::uint64_t val = std::stoi(matches[i].str());
-            std::uint64_t bits = cur_template.second.bits[i-1];
-            std::uint64_t max_val = NumericHelper::MaxValue(bits);
-
-            if (val > max_val)
-            {
-                throw HttpEncodeOutOfRangeException(
-                    "Error. Out of range. Group " + std::to_string(i)
-                    + " value is " + std::to_string(val)
-                    + " but the max value is " + std::to_string(max_val),
-                    i, val);
-            }
-
-            // Keep track of each numerical group
-            numerical_groups.push_back(val);
-        }
-
-        // Break out after found a regex match
-        break;
+        throw HttpEncoderException("Error. No PEN found");
     }
 
-    if (!matched)
-        throw HttpEncodeNoMatchException("No match for url: " + url);
+    // Get the PEN from the matches
+    std::uint64_t pen = std::stoull(matches[0].str());
 
+    // Get the template based on the PEN
+    selected_template = template_list.at(pen);
+
+        // If this is not a match continue to the next regex
+    if (!std::regex_match(url, matches, std::regex(selected_template.url)))
+        throw HttpEncodeNoMatchException("Error. No match for url: " + url);
+
+    if (matches.size() - 1 != selected_template.bits.size())
+        throw HttpEncodeNoMatchException("Error. Match is missing values for the given template");
+
+    // Skip the first group since its the whole match
+    for (std::uint32_t i = 1; i < matches.size(); i++)
+    {
+        std::uint64_t val = std::stoull(matches[i].str());
+        std::uint64_t bits = selected_template.bits[i-1];
+        std::uint64_t max_val = NumericHelper::MaxValue(bits);
+
+        if (val > max_val)
+        {
+            throw HttpEncodeOutOfRangeException(
+                "Error. Out of range. Group " + std::to_string(i)
+                + " value is " + std::to_string(val)
+                + " but the max value is " + std::to_string(max_val),
+                i, val);
+        }
+
+        // Keep track of each numerical group
+        numerical_groups.push_back(val);
+    }
+
+    // TODO move this into the above loop...
     uint128 encoded;
     std::uint32_t offset_bits = 0;
     std::uint32_t bits = 0;
     for (std::uint32_t i = 0; i < numerical_groups.size(); ++i)
     {
         // Get the amount of bits in the parallel array in numerical groups
-        bits = selected_template.second.bits[i];
+        bits = selected_template.bits[i];
 
         // Set the value in the uint128 variable
         encoded.SetValue(numerical_groups[i], bits, offset_bits);
