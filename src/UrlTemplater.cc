@@ -2,6 +2,11 @@
 
 #include <regex>
 #include <iostream>
+#include <fstream>
+
+#include "nlohmann/json.hpp"
+// Just because writing nlohmann is hard.
+using json = nlohmann::json;
 
 UrlTemplater::UrlTemplater()
 {
@@ -11,7 +16,7 @@ UrlTemplater::UrlTemplater()
 UrlTemplater::UrlTemplater(std::string template_file)
     : filename(template_file)
 {
-
+    LoadTemplates(filename);
 }
 
 bool UrlTemplater::Add(std::string new_template)
@@ -141,17 +146,57 @@ bool UrlTemplater::Add(std::string new_template)
     return true;
 }
 
-bool UrlTemplater::Remove(std::uint32_t key)
+bool UrlTemplater::Remove(std::uint64_t key)
 {
-// TODO
-    return false;
+    if (templates.find(key) == templates.end())
+    {
+        return false;
+    }
+
+    templates.erase(key);
+
+    return true;
+}
+
+bool UrlTemplater::SaveTemplates(std::string filename)
+{
+    std::ofstream file(filename);
+    json j;
+
+
+    return true;
 }
 
 bool UrlTemplater::LoadTemplates(std::string filename)
 {
-// TODO
+    this->filename = filename;
+    std::ifstream file(filename);
 
-    return false;
+    // Failed to open
+    if (!file.good())
+        return false;
+
+    // Get the whole file
+    json data = json::parse(file);
+    // Grab only the templates
+    json in_templates = data["templates"];
+
+    for (unsigned int i = 0; i < in_templates.size(); i++)
+    {
+        url_template temp;
+
+        // Get the url
+        temp.url = in_templates[i]["url"];
+
+        // Get the bits
+        for (auto& element : in_templates[i]["bits"])
+            temp.bits.push_back(static_cast<std::uint32_t>(element));
+
+        // Push the values onto the templates list
+        templates[static_cast<std::uint64_t>(in_templates[i]["pen"])] = temp;
+    }
+
+    return true;
 }
 
 const UrlTemplater::template_list& UrlTemplater::GetTemplates() const

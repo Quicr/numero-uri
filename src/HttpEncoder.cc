@@ -18,24 +18,28 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url,
     std::smatch matches;
 
     UrlTemplater::url_template selected_template;
-    bool matched = false;
 
     // Get the pen from the URL
-    if (!std::regex_match(url, matches, std::regex("(\\d+)")))
+    if (!std::regex_search(url, matches, std::regex("(\\d+)")))
     {
         throw HttpEncoderException("Error. No PEN found");
     }
 
-    // Get the PEN from the matches
+    // Get the PEN from the matches which should be the first number
     std::uint64_t pen = std::stoull(matches[0].str());
+
+    // Check if the template is in the list of templates
+    if (template_list.find(pen) == template_list.end())
+        throw HttpEncodeNoMatchException("Error. No template for PEN " + matches[0].str());
 
     // Get the template based on the PEN
     selected_template = template_list.at(pen);
 
-        // If this is not a match continue to the next regex
+    // If there is not a match then there is no template for this PEN
     if (!std::regex_match(url, matches, std::regex(selected_template.url)))
         throw HttpEncodeNoMatchException("Error. No match for url: " + url);
 
+    // Need the same number of numbers as the template expects
     if (matches.size() - 1 != selected_template.bits.size())
         throw HttpEncodeNoMatchException("Error. Match is missing values for the given template");
 
@@ -43,7 +47,7 @@ uint128 HttpEncoder::EncodeUrl(const std::string &url,
     for (std::uint32_t i = 1; i < matches.size(); i++)
     {
         std::uint64_t val = std::stoull(matches[i].str());
-        std::uint64_t bits = selected_template.bits[i-1];
+        std::uint32_t bits = selected_template.bits[i-1];
         std::uint64_t max_val = NumericHelper::MaxValue(bits);
 
         if (val > max_val)
@@ -103,8 +107,8 @@ std::string HttpEncoder::DecodeUrl(const std::string code_str,
     // Get the regex
     std::string reg = temp.url;
 
-    std::uint32_t idx = 0;
-    std::vector<std::uint32_t> group_indices;
+    size_t idx = 0;
+    std::vector<size_t> group_indices;
     char ch;
     size_t find = 0;
     while (idx < reg.size())
@@ -153,8 +157,8 @@ std::string HttpEncoder::DecodeUrl(const std::string code_str,
     }
 
     std::uint32_t num_bits;
-    std::uint32_t str_offset = 0;
-    std::uint32_t insert_idx;
+    size_t str_offset = 0;
+    size_t insert_idx;
     std::string insert_str;
     std::uint32_t bit_offset = 0;
     for (std::uint32_t i = 0; i < group_indices.size(); i++)

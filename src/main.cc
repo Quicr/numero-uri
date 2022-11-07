@@ -8,8 +8,7 @@ int main()
 {
     try
     {
-        // Filename should be an argument
-        // filename
+        // Filename should be an CLI argument
         std::string filename = "./files/templates.json";
 
         // Templater
@@ -25,7 +24,7 @@ int main()
                   << std::endl;
 
         // Get the url
-        std::string url = "https://webex.com/11259375/meeting1234/user3213";
+        std::string url = "https://webex.com/1/meeting1234/user3213";
 
         // // Encode
         HttpEncoder encoder;

@@ -28,12 +28,13 @@ public:
         std::vector<std::uint32_t> bits;
     } url_template;
 
-    typedef std::map<std::uint32_t, url_template> template_list;
+    typedef std::map<std::uint64_t, url_template> template_list;
 
     UrlTemplater();
     UrlTemplater(std::string template_file);
     bool Add(std::string new_template);
-    bool Remove(std::uint32_t key);
+    bool Remove(std::uint64_t key);
+    bool SaveTemplates(std::string filename);
     bool LoadTemplates(std::string filename);
     const template_list& GetTemplates() const;
 private:

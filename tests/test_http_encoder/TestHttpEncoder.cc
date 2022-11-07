@@ -10,7 +10,8 @@ namespace
     protected:
         TestHttpEncoder()
         {
-            templater.Add("https://www.?webex.com/<int24=1>/meeting<int16>/user<int16>");
+            templater.Add("https://www.?webex.com/<int24=11259375>/meeting<int16>/user<int16>");
+            templater.Add("https://webex.com/<int24=1>/<int16>/meeting<int16>/user<int16>");
         }
 
         ~TestHttpEncoder() = default;
@@ -47,9 +48,6 @@ namespace
 
     TEST_F(TestHttpEncoder, Decode)
     {
-        // Put the new template into the templater
-        templater.Add("https://webex.com/<int24=1>/<int16>/meeting<int16>/user<int16>");
-
         std::string actual = "https://webex.com/1/123/meeting555/user777";
         std::string encoded = "0000000110157536742700648518346341351424";
         std::string decoded = encoder.DecodeUrl(encoded, templater.GetTemplates());
@@ -77,11 +75,13 @@ namespace
         }, uint128Exception);
 
         EXPECT_THROW({
+            templater.Add("https://webex.com/<int24=2>/meeting<int16>/user<int16>");
             std::string url = "https://webex.com/2/meeting1234/user3213";
 
             uint128 encoded = encoder.EncodeUrl(url, templater.GetTemplates());
             std::string res = encoded.ToDecimalString();
 
+            templater.Remove(2);
             std::string decoded = encoder.DecodeUrl(res, templater.GetTemplates());
         }, HttpDecodeNoMatchException);
     }
