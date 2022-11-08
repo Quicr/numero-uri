@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 
-#include <iostream>
-
 #include "NumericHelper.hh"
 
 #define MAX_SIZE 128

@@ -12,4 +12,8 @@ RUN apk add cmake
 RUN mkdir webex_http_encoder
 WORKDIR /webex_http_encoder
 
+FROM base as run
 CMD cmake -B build && cmake --build build && build/bin/webex_http_encoder
+
+FROM base as test
+CMD cmake -B build && cmake --build build && ctest --test-dir build/tests

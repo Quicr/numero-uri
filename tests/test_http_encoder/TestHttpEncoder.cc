@@ -10,7 +10,7 @@ namespace
     protected:
         TestHttpEncoder()
         {
-            templater.Add("https://www.?webex.com/<int24=11259375>/meeting<int16>/user<int16>");
+            templater.Add("https://!{www.}!webex.com/<int24=11259375>/meeting<int16>/user<int16>");
             templater.Add("https://webex.com/<int24=1>/<int16>/meeting<int16>/user<int16>");
         }
 

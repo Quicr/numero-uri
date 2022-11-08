@@ -1,9 +1,11 @@
+CMD 		?= RUN
+
 .PHONY: all
 
 all: docker
 
 docker:
-	@docker build -t webex_http_encoder .
+	@docker build -t webex_http_encoder --target ${CMD} .
 	-@docker run -v ${PWD}:/webex_http_encoder --rm -it webex_http_encoder
 
 build:

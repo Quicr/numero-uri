@@ -1,3 +1,1 @@
 - Create a CLI program
-- Replace docker make with cmake and properly configure it to run tests etc
-- Flesh out out UrlTemplater

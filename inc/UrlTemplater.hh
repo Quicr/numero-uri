@@ -6,6 +6,10 @@
 #include <map>
 #include <stdexcept>
 
+#include "nlohmann/json.hpp"
+// Just because writing nlohmann is hard.
+using json = nlohmann::json;
+
 class UrlTemplaterException : public std::runtime_error
 {
 public:
@@ -31,11 +35,13 @@ public:
     typedef std::map<std::uint64_t, url_template> template_list;
 
     UrlTemplater();
-    UrlTemplater(std::string template_file);
-    bool Add(std::string new_template);
-    bool Remove(std::uint64_t key);
-    bool SaveTemplates(std::string filename);
-    bool LoadTemplates(std::string filename);
+    UrlTemplater(const std::string template_file);
+    bool Add(const std::string new_template);
+    bool Remove(const std::uint64_t key);
+    void SaveTemplates(const std::string filename) const;
+    json ToJson() const;
+    bool LoadTemplates(const std::string filename);
+    bool FromJson(const json& data);
     const template_list& GetTemplates() const;
 private:
     std::string filename;

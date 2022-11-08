@@ -4,17 +4,25 @@
 #include "HttpEncoder.hh"
 #include "uint128.hh"
 
-int main()
+int main(int argc, char** argv)
 {
     try
     {
+        if (argc == 1)
+        {
+            // TODO Output a help string
+            return 0;
+        }
+
         // Filename should be an CLI argument
         std::string filename = "./files/templates.json";
 
         // Templater
         UrlTemplater templater(filename);
         templater.Add("https://webex.com/<int24=1>/meeting<int16>/user<int16>");
+        templater.Add("https://!{www.}!webex.com/<int24=11259375>/meeting<int16>/user<int16>");
 
+        templater.SaveTemplates("test.json");
         auto x = templater.GetTemplates();
         std::cout << "url " << x[1].url
                   << " bits size " << x[1].bits.size()

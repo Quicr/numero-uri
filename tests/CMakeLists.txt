@@ -12,4 +12,6 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(test_http_encoder)
+add_subdirectory(test_numeric_helper)
 add_subdirectory(test_uint128)
+add_subdirectory(test_url_templater)

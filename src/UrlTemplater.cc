@@ -1,33 +1,28 @@
 #include "UrlTemplater.hh"
 
 #include <regex>
-#include <iostream>
 #include <fstream>
-
-#include "nlohmann/json.hpp"
-// Just because writing nlohmann is hard.
-using json = nlohmann::json;
 
 UrlTemplater::UrlTemplater()
 {
 
 }
 
-UrlTemplater::UrlTemplater(std::string template_file)
+UrlTemplater::UrlTemplater(const std::string template_file)
     : filename(template_file)
 {
     LoadTemplates(filename);
 }
 
-bool UrlTemplater::Add(std::string new_template)
+bool UrlTemplater::Add(const std::string new_template)
 {
     // The first value must be filled in with their PEN
     // Example http://www?.webex.com/<int24=77>/meeting<int16>/user<int16>
     const std::string example =
-        "http://www.?webex.com/<int24=777>/meeting<int16>/user<int16>";
+        "http://!{www.}!webex.com/<int24=777>/meeting<int16>/user<int16>";
 
-    // TODO if there is a question mark put it into a non-capturing group
-    const std::string optional_www_regex = "(?:www\\.)?";
+    // If there is a !{...}! it is an optional group
+    const std::regex optional_regex("!\\{(.+)\\}!");
 
     // Parse the string
     // Build a regex out of it.. good luck brett
@@ -47,14 +42,6 @@ bool UrlTemplater::Add(std::string new_template)
     // Put everything up to the first option into the regex
     temp.url += new_template.substr(0, start-1);
 
-    // TODO this should be a little more robust?
-    std::size_t www_start = temp.url.find("www.?");
-    if (www_start != std::string::npos)
-    {
-        temp.url.replace(www_start, 5, optional_www_regex);
-    }
-
-    // TODO maybe need to check for a / between the (\\d+)?
     // Add the regex for a digit
     temp.url += "(\\d+)";
 
@@ -141,12 +128,36 @@ bool UrlTemplater::Add(std::string new_template)
     // Close the entire string
     temp.url += '$';
 
+    // Extract and replace optional chunks
+    std::regex_search(temp.url, matches, optional_regex);
+    std::string optional_str;
+    size_t search_idx = 1;
+    size_t optional_idx;
+    size_t optional_sz;
+    size_t period_idx;
+    while (search_idx < matches.size())
+    {
+        optional_str = matches[search_idx++].str();
+        optional_idx = temp.url.find("!{" + optional_str + "}!");
+        optional_sz = optional_str.size() + 4;
+
+        // This could be a problem if there are a lot of wild cards..
+        // Replace the period if found
+        period_idx = optional_str.find('.');
+        if (period_idx != std::string::npos)
+            optional_str.replace(optional_str.find('.'), 1, "\\.");
+
+        // Replace the optional chunk !{...}!
+        if (optional_idx != std::string::npos)
+            temp.url.replace(optional_idx, optional_sz, "(?:" + optional_str + ")?");
+    }
+
     templates[pen_value] = temp;
 
     return true;
 }
 
-bool UrlTemplater::Remove(std::uint64_t key)
+bool UrlTemplater::Remove(const std::uint64_t key)
 {
     if (templates.find(key) == templates.end())
     {
@@ -158,16 +169,39 @@ bool UrlTemplater::Remove(std::uint64_t key)
     return true;
 }
 
-bool UrlTemplater::SaveTemplates(std::string filename)
+void UrlTemplater::SaveTemplates(const std::string filename) const
 {
+    json j = ToJson();
     std::ofstream file(filename);
-    json j;
-
-
-    return true;
+    file << std::setw(4) << j << std::endl;
+    file.close();
 }
 
-bool UrlTemplater::LoadTemplates(std::string filename)
+json UrlTemplater::ToJson() const
+{
+    // Create the template string
+    json j;
+    json j_temp;
+    json j_bits;
+    for (auto temp : templates)
+    {
+        j_temp.clear();
+        j_temp["pen"] = temp.first;
+        j_temp["url"] = temp.second.url;
+
+        // Fill in the bits array
+        j_bits.clear();
+        for (auto bit : temp.second.bits)
+            j_bits.push_back(bit);
+        j_temp["bits"] = j_bits;
+
+        j.push_back(j_temp);
+    }
+
+    return j;
+}
+
+bool UrlTemplater::LoadTemplates(const std::string filename)
 {
     this->filename = filename;
     std::ifstream file(filename);
@@ -178,22 +212,25 @@ bool UrlTemplater::LoadTemplates(std::string filename)
 
     // Get the whole file
     json data = json::parse(file);
-    // Grab only the templates
-    json in_templates = data["templates"];
+    file.close();
+    return FromJson(data);
+}
 
-    for (unsigned int i = 0; i < in_templates.size(); i++)
+bool UrlTemplater::FromJson(const json& data)
+{
+    for (unsigned int i = 0; i < data.size(); i++)
     {
         url_template temp;
 
         // Get the url
-        temp.url = in_templates[i]["url"];
+        temp.url = data[i]["url"];
 
         // Get the bits
-        for (auto& element : in_templates[i]["bits"])
+        for (auto& element : data[i]["bits"])
             temp.bits.push_back(static_cast<std::uint32_t>(element));
 
         // Push the values onto the templates list
-        templates[static_cast<std::uint64_t>(in_templates[i]["pen"])] = temp;
+        templates[static_cast<std::uint64_t>(data[i]["pen"])] = temp;
     }
 
     return true;
