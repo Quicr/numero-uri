@@ -9,12 +9,12 @@ namespace
     {
         uint128 value;
 
-        uint16_t in = 0;
+        uint64_t in = 0;
         uint32_t bits = 4;
 
-        value.SetValue(in, bits, value.last() - bits);
+        value.SetValue(in, bits, value.last() - static_cast<uint16_t>(bits));
 
-        uint16_t output = value.GetValue(bits, value.last() - bits);
+        uint64_t output = value.GetValue(bits, value.last() - bits);
 
         ASSERT_EQ(output, in);
     }

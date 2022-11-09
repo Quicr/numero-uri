@@ -72,4 +72,11 @@ namespace
             output.second.url);
         ASSERT_EQ(std::vector<std::uint32_t>({24, 16, 16}), output.second.bits);
     }
+
+    TEST_F(TestUrlTemplater, Clear)
+    {
+        templater.Clear();
+
+        ASSERT_EQ(templater.GetTemplates().size(), 0);
+    }
 }

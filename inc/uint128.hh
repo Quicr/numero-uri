@@ -38,7 +38,7 @@ public:
     }
 
     void SetValue(std::uint64_t value,
-                  const std::uint16_t num_bits,
+                  const std::uint32_t num_bits,
                   const std::uint16_t msb_offset)
     {
         if (num_bits > BIT_64)
@@ -61,7 +61,7 @@ public:
         }
     }
 
-    std::uint64_t GetValue(const std::uint16_t num_bits,
+    std::uint64_t GetValue(const std::uint32_t num_bits,
                            const std::uint16_t msb_offset) const
     {
         if (num_bits > BIT_64)
@@ -193,7 +193,7 @@ public:
         return str;
     }
 
-    std::uint64_t last()
+    std::uint16_t last()
     {
         return MAX_SIZE - 1;
     }

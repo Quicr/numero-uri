@@ -13,7 +13,9 @@ RUN mkdir webex_http_encoder
 WORKDIR /webex_http_encoder
 
 FROM base as run
-CMD cmake -B build && cmake --build build && build/bin/webex_http_encoder
+ENV in_args ""
+CMD cmake -B build -DBUILD_TESTS=OFF && cmake --build build && build/bin/webex_http_encoder ${in_args}
 
 FROM base as test
-CMD cmake -B build && cmake --build build && ctest --test-dir build/tests
+CMD cmake -B build -DBUILD_TESTS=ON && cmake --build build \
+    && ctest --test-dir build/tests --output-on-failure

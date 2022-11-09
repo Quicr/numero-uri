@@ -57,7 +57,7 @@ bool UrlTemplater::Add(const std::string new_template)
     }
 
     // Get the bits
-    std::uint32_t pen_bit = std::stoull(matches[1].str());
+    std::uint32_t pen_bit = std::stoul(matches[1].str());
     if (pen_bit > 64)
     {
         std::string msg = "Error. PEN cannot have more than 64 bits";
@@ -83,6 +83,8 @@ bool UrlTemplater::Add(const std::string new_template)
     {
         std::string msg = "Error. PEN value is too large for a 64 bit number";
         msg += " PEN value found = " + matches[2].str();
+        msg += " ";
+        msg += ex.what();
         throw msg;
     }
 
@@ -114,7 +116,7 @@ bool UrlTemplater::Add(const std::string new_template)
             }
 
             // Get the bits from the match
-            temp.bits.push_back(std::stoull(matches[1].str()));
+            temp.bits.push_back(std::stoul(matches[1].str()));
             start = end + 1;
 
             // Push regex onto the string
@@ -234,6 +236,11 @@ bool UrlTemplater::FromJson(const json& data)
     }
 
     return true;
+}
+
+void UrlTemplater::Clear()
+{
+    templates.clear();
 }
 
 const UrlTemplater::template_list& UrlTemplater::GetTemplates() const

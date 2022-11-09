@@ -42,6 +42,7 @@ public:
     json ToJson() const;
     bool LoadTemplates(const std::string filename);
     bool FromJson(const json& data);
+    void Clear();
     const template_list& GetTemplates() const;
 private:
     std::string filename;
