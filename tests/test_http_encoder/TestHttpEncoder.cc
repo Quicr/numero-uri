@@ -12,6 +12,7 @@ namespace
         {
             templater.Add("https://!{www.}!webex.com/<int24=11259375>/meeting<int16>/user<int16>");
             templater.Add("https://webex.com/<int24=1>/<int16>/meeting<int16>/user<int16>");
+            templater.Add("https://!{www.}!webex.com/<int24=16777215>/party<int5>/building<int3>/floor<int39>/room<int25>/meeting<int32>");
         }
 
         ~TestHttpEncoder() = default;
@@ -27,6 +28,16 @@ namespace
         uint128 encoded = encoder.EncodeUrl(url, templater.GetTemplates());
         std::string res = encoded.ToDecimalString();
         std::string actual = "1237981375469430707200000000000000000000";
+        ASSERT_EQ(res, actual);
+    }
+
+    TEST_F(TestHttpEncoder, EncodeUse128Bits)
+    {
+        std::string url = "https://www.webex.com/16777215/party31/building7/floor549755813887/room33554431/meeting4294967295";
+
+        uint128 encoded = encoder.EncodeUrl(url, templater.GetTemplates());
+        std::string res = encoded.ToDecimalString();
+        std::string actual = "1844674407370955161518446744073709551615";
         ASSERT_EQ(res, actual);
     }
 

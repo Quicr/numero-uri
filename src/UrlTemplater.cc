@@ -17,7 +17,6 @@ UrlTemplater::UrlTemplater(const std::string template_file)
 bool UrlTemplater::Add(const std::string new_template)
 {
     // The first value must be filled in with their PEN
-    // Example http://www?.webex.com/<int24=77>/meeting<int16>/user<int16>
     const std::string example =
         "http://!{www.}!webex.com/<int24=777>/meeting<int16>/user<int16>";
 
@@ -246,4 +245,10 @@ void UrlTemplater::Clear()
 const UrlTemplater::template_list& UrlTemplater::GetTemplates() const
 {
     return templates;
+}
+
+const UrlTemplater::url_template&
+    UrlTemplater::GetTemplate(std::uint64_t pen) const
+{
+    return templates.at(pen);
 }

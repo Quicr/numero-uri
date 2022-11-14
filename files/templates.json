@@ -16,5 +16,17 @@
         ],
         "pen": 11259375,
         "url": "^https://(?:www\\.)?webex.com/(\\d+)/meeting(\\d+)/user(\\d+)$"
+    },
+    {
+        "bits": [
+            24,
+            5,
+            3,
+            39,
+            25,
+            32
+        ],
+        "pen": 16777215,
+        "url": "^https://(?:www\\.)?webex.com/(\\d+)/party(\\d+)/building(\\d+)/floor(\\d+)/room(\\d+)/meeting(\\d+)$"
     }
 ]

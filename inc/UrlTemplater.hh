@@ -44,6 +44,7 @@ public:
     bool FromJson(const json& data);
     void Clear();
     const template_list& GetTemplates() const;
+    const url_template& GetTemplate(std::uint64_t pen) const;
 private:
     std::string filename;
     template_list templates;

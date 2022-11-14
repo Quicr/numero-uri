@@ -40,8 +40,7 @@ namespace ConfigurationManager
         return std::string(buf, bytes+1);
     }
 
-    template <typename T>
-    void UpdateConfigFile(std::string key, T val)
+    std::string InitConfig()
     {
         std::string config_filepath = PathToExecutable() + "config.json";
 
@@ -51,17 +50,27 @@ namespace ConfigurationManager
 
         if (!config_file)
         {
-            std::cout << "Failed to open config.json creating an empty one\n";
+            std::cout << "Failed to open config.json creating an initial one\n";
             config_file.open(config_filepath,
                 std::fstream::out | std::fstream::trunc);
-            config_file << "{\n}\n";
+            json data;
+            data["template-file"] = PathToExecutable() + "/templates.json";
+            config_file << std::setw(4) << data;
 
             // If I don't close the file the json parse complains thats
             // there is not contents in the file, even when using
             // config_file.flush()
             config_file.close();
-            config_file.open(config_filepath, std::fstream::in);
         }
+
+        return config_filepath;
+    }
+
+    template <typename T>
+    void UpdateConfigFile(std::string key, T val)
+    {
+        std::string config_filepath = InitConfig();
+        std::fstream config_file(config_filepath, std::fstream::in);
 
         // Get the whole config file
         json data = json::parse(config_file);
@@ -73,7 +82,6 @@ namespace ConfigurationManager
         config_file.open(config_filepath, std::fstream::out);
 
         data[key] = val;
-        std::cout << std::setw(4) << data << std::endl;
 
         config_file << std::setw(4) << data << std::endl;
         config_file.close();
@@ -81,16 +89,28 @@ namespace ConfigurationManager
 
     std::string GetTemplateFilePath()
     {
-        std::string config_filepath = PathToExecutable() + "config.json";
-        std::ifstream config_file(config_filepath);
-        if (!config_file.good())
-        {
-            return "";
-        }
+        std::ifstream config_file;
 
+        config_file.open((InitConfig()));
         json data = json::parse(config_file);
         config_file.close();
 
-        return std::string(data["template-file"]);
+        std::string template_filepath = data["template-file"];
+
+        // Make sure the template file exists
+        std::fstream template_file(template_filepath, std::fstream::in);
+
+        if (!template_file)
+        {
+            std::cout << "Failed to open template file "
+                      << "creating an empty one\n";
+            template_file.open(template_filepath,
+                std::fstream::out | std::fstream::trunc);
+            template_file << "{\n}\n";
+        }
+
+        template_file.close();
+
+        return template_filepath;
     }
 }
