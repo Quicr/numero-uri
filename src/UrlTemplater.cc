@@ -84,7 +84,15 @@ bool UrlTemplater::Add(const std::string new_template)
         msg += " PEN value found = " + matches[2].str();
         msg += " ";
         msg += ex.what();
-        throw msg;
+        throw UrlTemplaterException(msg);
+    }
+
+    if (templates.find(pen_value) != templates.end())
+    {
+        std::string msg = "Error. PEN key " + std::to_string(pen_value) +
+                          " is not unique and already exists"
+                          " in the templates list.";
+        throw UrlTemplaterException(msg);
     }
 
     temp.bits.push_back(pen_bit);

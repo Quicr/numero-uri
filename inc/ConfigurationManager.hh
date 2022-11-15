@@ -21,11 +21,14 @@ namespace ConfigurationManager
         const size_t len = FILENAME_MAX;
         std::int64_t bytes;
         char buf[len];
+        char slash;
         #ifdef _WIN32
             bytes = GetModuleFileName(NULL, buf, len);
+            slash = '\\';
         #else
             bytes = readlink("/proc/self/exe", buf, len);
             bytes = (bytes > 0) ? bytes : 0;
+            slash = '/';
         #endif
 
         // Remove the name
@@ -34,7 +37,7 @@ namespace ConfigurationManager
         {
             ch = buf[bytes - 1];
             bytes--;
-        } while (ch != '/' && bytes > 0);
+        } while (ch != slash && bytes > 0);
 
         // Include the slash
         return std::string(buf, bytes+1);
