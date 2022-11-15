@@ -1,7 +1,7 @@
 add_executable(TestUrlTemplater TestUrlTemplater.cc)
 
 target_link_libraries(TestUrlTemplater PUBLIC
-    webex_http_encoder_lib
+    numero_uri_lib
     gtest_main
 )
 

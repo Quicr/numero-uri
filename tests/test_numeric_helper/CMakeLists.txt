@@ -1,7 +1,7 @@
 add_executable(TestNumericHelper TestNumericHelper.cc)
 
 target_link_libraries(TestNumericHelper PUBLIC
-    webex_http_encoder_lib
+    numero_uri_lib
     gtest_main
 )
 

@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 3.8)
-project(webex_http_encoder C CXX)
+project(numero_uri C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 99)
