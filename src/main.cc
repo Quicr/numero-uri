@@ -59,7 +59,7 @@ int main(int argc, char** argv)
         {
             std::uint64_t pen = std::stoull(argv[2]);
             if (!templater.Remove(pen))
-                throw UrlTemplaterException("Failed to remove template fro list");
+                throw UrlTemplaterException("Failed to remove template from list");
 
             // Save the template file
             templater.SaveTemplates(template_file);
