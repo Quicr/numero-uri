@@ -18,7 +18,32 @@ Important to note, the templates file will start empty. The configuration.json a
 - `build`       Builds the executable using CMake on your local machine.
 - `test`        Runs the tests.
 - `clean`       Removes the build directory.
+
 ---
+## Build Instructions
+To build the project executable and library
+1. `cmake -B build -DBUILD_TESTS=OFF`
+2. `cmake --build build`
+
+To run the executable from the CLI
+- build/bin/numero_uri [args]
+- Available arguments and formats
+    - encode            Encodes a URL depending on the current loaded templates
+        - ex. encode https://webex.com/1/meeting1234/user3213
+    - decode            Decodes a uint128 string from the encode function
+    - config            Changes a configuration setting (located in executable directory)
+        - ex. config template-file /path/to/template.json
+    - add-template      Adds a template to the templates file
+        - ex. add-template https://www.webex.com/\<int24=123\>/meeting\<int16\>/user\<int16\>
+    - remove-template   Removes a template from the templates file
+        - ex. remove-template 123
+
+To build the tests and run them
+1. `cmake -B build -DBUILD_TESTS=ON`
+2. `cmake --build build`
+3. `ctest --test-dir build/tests --output-on-failure`
+
+--
 ## Examples
 ### Docker
 - Add a template
