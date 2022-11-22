@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
-#include "UrlTemplater.hh"
-#include "HttpEncoder.hh"
+#include "UrlEncoder.hh"
 #include "uint128.hh"
 #include "ConfigurationManager.hh"
 
@@ -16,23 +15,22 @@ int main(int argc, char** argv)
             return 1;
         }
 
+        UrlEncoder encoder;
+
         // Get the template file from the configuration file
         std::string template_file = ConfigurationManager::GetTemplateFilePath();
 
-        // Templater
-        UrlTemplater templater(template_file);
-
-        HttpEncoder encoder;
+        encoder.LoadTemplatesFromFile(template_file);
         if (strcmp(argv[1], "encode") == 0)
         {
             // encode test - https://webex.com/1/meeting1234/user3213
-            uint128 encoded = encoder.EncodeUrl(argv[2], templater.GetTemplates());
+            uint128 encoded = encoder.EncodeUrl(argv[2]);
             std::cout << encoded.ToDecimalString() << "\n";
         }
         else if (strcmp(argv[1], "decode") == 0)
         {
             //decode test - 0000000112021553484800000000000000000000
-            std::string decoded = encoder.DecodeUrl(argv[2], templater.GetTemplates());
+            std::string decoded = encoder.DecodeUrl(argv[2]);
             std::cout << decoded << "\n";
         }
         else if (strcmp(argv[1], "config") == 0)
@@ -41,28 +39,28 @@ int main(int argc, char** argv)
             if (strcmp(argv[2], "template-file") == 0)
             {
                 std::string f_path = ConfigurationManager::GetTemplateFilePath();
-                templater.Clear();
-                templater.LoadTemplatesFromFile(f_path);
+                encoder.Clear();
+                encoder.LoadTemplatesFromFile(f_path);
                 std::cout << "Updated template file location\n";
             }
         }
         else if (strcmp(argv[1], "add-template") == 0)
         {
-            if (!templater.Add(argv[2]))
-                throw UrlTemplaterException("Failed to add template to list");
+            if (!encoder.Add(argv[2]))
+                throw UrlEncoderException("Failed to add template to list");
 
             // Save the template file
-            templater.SaveTemplates(template_file);
+            encoder.SaveTemplates(template_file);
             std::cout << "Added template.\n";
         }
         else if (strcmp(argv[1], "remove-template") == 0)
         {
             std::uint64_t pen = std::stoull(argv[2]);
-            if (!templater.Remove(pen))
-                throw UrlTemplaterException("Failed to remove template from list");
+            if (!encoder.Remove(pen))
+                throw UrlEncoderException("Failed to remove template from list");
 
             // Save the template file
-            templater.SaveTemplates(template_file);
+            encoder.SaveTemplates(template_file);
             std::cout << "Template with PEN " << pen << " has been removed.\n";
         }
         else
