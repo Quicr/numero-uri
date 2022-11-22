@@ -96,20 +96,4 @@ public:
                           const UrlTemplater::template_list& template_list,
                           const std::uint32_t bit_format=64);
 private:
-
-    // TODO load these in from some sort of file?
-    // UrlTemplater::template_list templates = {
-    //     { 11259375,
-    //         {
-    //             "https://[www.]?webex.com/(\\d+)/meeting(\\d+)/user(\\d+)",
-    //             { 24, 16, 16 }
-    //         }
-    //     },
-    //     { 1,
-    //         {
-    //             "https://[www.]?webex.com/(\\d+)/(\\d+)/meeting(\\d+)/user(\\d+)",
-    //             { 24, 16, 16, 16 }
-    //         }
-    //     }
-    // };
 };

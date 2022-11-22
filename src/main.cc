@@ -42,7 +42,7 @@ int main(int argc, char** argv)
             {
                 std::string f_path = ConfigurationManager::GetTemplateFilePath();
                 templater.Clear();
-                templater.LoadTemplates(f_path);
+                templater.LoadTemplatesFromFile(f_path);
                 std::cout << "Updated template file location\n";
             }
         }

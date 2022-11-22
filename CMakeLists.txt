@@ -8,6 +8,7 @@ set(CMAKE_C_STANDARD 99)
 option(BUILD_TESTS "build the tests" OFF)
 
 # Add subdirectory goes into the directory and looks for a cmakelists file
+add_subdirectory(contrib)
 add_subdirectory(src)
 
 if (BUILD_TESTS)

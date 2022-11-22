@@ -1,0 +1,6 @@
+[submodule "contrib/json"]
+	path = contrib/json
+	url = https://github.com/nlohmann/json
+[submodule "contrib/googletest"]
+	path = contrib/googletest
+	url = https://github.com/google/googletest.git

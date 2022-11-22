@@ -11,7 +11,7 @@ UrlTemplater::UrlTemplater()
 UrlTemplater::UrlTemplater(const std::string template_file)
     : filename(template_file)
 {
-    LoadTemplates(filename);
+    LoadTemplatesFromFile(filename);
 }
 
 bool UrlTemplater::Add(const std::string new_template)
@@ -210,7 +210,7 @@ json UrlTemplater::ToJson() const
     return j;
 }
 
-bool UrlTemplater::LoadTemplates(const std::string filename)
+bool UrlTemplater::LoadTemplatesFromFile(const std::string filename)
 {
     this->filename = filename;
     std::ifstream file(filename);
