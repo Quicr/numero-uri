@@ -11,10 +11,12 @@ target_link_libraries(numero_uri_lib PUBLIC nlohmann_json)
 
 target_include_directories(numero_uri_lib PUBLIC
 "${PROJECT_BINARY_DIR}"
-"${PROJECT_SOURCE_DIR}/inc"
-"${PROJECT_SOURCE_DIR}/inc_private")
+"${PROJECT_SOURCE_DIR}/inc")
 
-target_include_directories(numero_uri_lib PRIVATE
+# target_include_directories(numero_uri_lib PRIVATE
+# "${PROJECT_SOURCE_DIR}/inc_private")
+
+target_include_directories(numero_uri PRIVATE
 "${PROJECT_SOURCE_DIR}/inc_private")
 
 target_link_libraries(numero_uri PUBLIC

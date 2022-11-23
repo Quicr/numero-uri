@@ -106,10 +106,7 @@ public:
 
     bool Add(const std::string new_template);
     bool Remove(const std::uint64_t key);
-    void SaveTemplates(const std::string filename) const;
     json ToJson() const;
-    bool LoadTemplatesFromFile(const std::string filename);
-    bool LoadTemplatesFromHttp(const std::string url);
     bool FromJson(const json& data);
     void Clear();
     const template_list& GetTemplates() const;

@@ -1,6 +1,5 @@
 #include "UrlEncoder.hh"
 
-#include <fstream>
 #include <regex>
 
 #include "NumericHelper.hh"
@@ -355,14 +354,6 @@ bool UrlEncoder::Remove(const std::uint64_t key)
     return true;
 }
 
-void UrlEncoder::SaveTemplates(const std::string filename) const
-{
-    json j = ToJson();
-    std::ofstream file(filename);
-    file << std::setw(4) << j << std::endl;
-    file.close();
-}
-
 json UrlEncoder::ToJson() const
 {
     // Create the template string
@@ -385,20 +376,6 @@ json UrlEncoder::ToJson() const
     }
 
     return j;
-}
-
-bool UrlEncoder::LoadTemplatesFromFile(const std::string filename)
-{
-    std::ifstream file(filename);
-
-    // Failed to open
-    if (!file.good())
-        return false;
-
-    // Get the whole file
-    json data = json::parse(file);
-    file.close();
-    return FromJson(data);
 }
 
 bool UrlEncoder::FromJson(const json& data)

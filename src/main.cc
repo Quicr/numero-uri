@@ -3,6 +3,10 @@
 #include "UrlEncoder.hh"
 #include "uint128.hh"
 #include "ConfigurationManager.hh"
+#include "TemplateFileManager.hh"
+
+#include "nlohmann/json.hpp"
+using json = nlohmann::json;
 
 int main(int argc, char** argv)
 {
@@ -20,7 +24,8 @@ int main(int argc, char** argv)
         // Get the template file from the configuration file
         std::string template_file = ConfigurationManager::GetTemplateFilePath();
 
-        encoder.LoadTemplatesFromFile(template_file);
+        json data = TemplateFileManager::LoadTemplatesFromFile(template_file);
+        encoder.FromJson(data);
         if (strcmp(argv[1], "encode") == 0)
         {
             // encode test - https://webex.com/1/meeting1234/user3213
@@ -40,7 +45,8 @@ int main(int argc, char** argv)
             {
                 std::string f_path = ConfigurationManager::GetTemplateFilePath();
                 encoder.Clear();
-                encoder.LoadTemplatesFromFile(f_path);
+                json data = TemplateFileManager::LoadTemplatesFromFile(f_path);
+                encoder.FromJson(data);
                 std::cout << "Updated template file location\n";
             }
         }
@@ -50,7 +56,8 @@ int main(int argc, char** argv)
                 throw UrlEncoderException("Failed to add template to list");
 
             // Save the template file
-            encoder.SaveTemplates(template_file);
+            json data = encoder.ToJson();
+            TemplateFileManager::SaveTemplates(template_file, data);
             std::cout << "Added template.\n";
         }
         else if (strcmp(argv[1], "remove-template") == 0)
@@ -60,7 +67,7 @@ int main(int argc, char** argv)
                 throw UrlEncoderException("Failed to remove template from list");
 
             // Save the template file
-            encoder.SaveTemplates(template_file);
+            // encoder.SaveTemplates(template_file);
             std::cout << "Template with PEN " << pen << " has been removed.\n";
         }
         else
