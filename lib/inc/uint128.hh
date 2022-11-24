@@ -152,7 +152,51 @@ public:
         return str;
     }
 
+    std::string ToHexString(const char delimiter='\0',
+                            const char prepend_zeros=true) const
+    {
+        std::string str;
+        bool first_non_zero = false;
+        std::uint32_t i = 0;
+        std::uint8_t val = digits[i];
+        while (i++ < digits.size())
+        {
+
+            // Every 4 iterations push the hex to the string
+            // At zero and 4 iter, set the value
+            if (i % 4 == 0 && i != 0)
+            {
+                if (val > 0)
+                {
+                    first_non_zero = true;
+                }
+
+                if ((i != 0 && first_non_zero) || prepend_zeros)
+                {
+                    // Push the hex character on the string
+                    if (val >= 0 && val <= 9)
+                        str.push_back(static_cast<char>(val) + '0');
+                    else
+                        str.push_back(static_cast<char>(val-10) + 'A');
+
+                }
+
+                val = 0;
+            }
+
+            // Add a delimiter
+            if (delimiter != '\0' && i != 0 && i % 8 == 0)
+                str.push_back(delimiter);
+
+            val = val << 1;
+            val += digits[i];
+        }
+
+        return str;
+    }
+
     std::string ToDecimalString(const char delimiter='\0',
+                                const bool prepend_zeroes=true,
                                 const std::uint32_t bit_format=BIT_64) const
     {
         if (bit_format > BIT_64)
@@ -181,11 +225,14 @@ public:
                 ++iter;
             }
 
-            add_zeroes = NumPrependZeroes(value, bit_format);
-
-            while (add_zeroes-- != 0)
+            if (group > 1 || prepend_zeroes)
             {
-                str += '0';
+                add_zeroes = NumPrependZeroes(value, bit_format);
+
+                while (add_zeroes-- != 0)
+                {
+                    str += '0';
+                }
             }
 
             str += std::to_string(value);

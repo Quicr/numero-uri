@@ -30,7 +30,7 @@ int main(int argc, char** argv)
         {
             // encode test - https://webex.com/1/meeting1234/user3213
             uint128 encoded = encoder.EncodeUrl(argv[2]);
-            std::cout << encoded.ToDecimalString() << "\n";
+            std::cout << encoded.ToHexString() << "\n";
         }
         else if (strcmp(argv[1], "decode") == 0)
         {
