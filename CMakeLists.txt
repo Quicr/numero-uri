@@ -9,7 +9,8 @@ option(BUILD_TESTS "build the tests" OFF)
 
 # Add subdirectory goes into the directory and looks for a cmakelists file
 add_subdirectory(contrib)
-add_subdirectory(src)
+add_subdirectory(lib)
+add_subdirectory(cli)
 
 if (BUILD_TESTS)
     enable_testing()

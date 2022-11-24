@@ -20,12 +20,13 @@ namespace ConfigurationManager
     {
         const size_t len = FILENAME_MAX;
         std::int64_t bytes;
-        char buf[len];
         char slash;
         #ifdef _WIN32
+            wchar_t buf[len];
             bytes = GetModuleFileName(NULL, buf, len);
             slash = '\\';
         #else
+            char buf[len];
             bytes = readlink("/proc/self/exe", buf, len);
             bytes = (bytes > 0) ? bytes : 0;
             slash = '/';
@@ -39,8 +40,17 @@ namespace ConfigurationManager
             bytes--;
         } while (ch != slash && bytes > 0);
 
+        // Copy to a string
+        std::string path;
+        for (std::int64_t idx = 0; idx < bytes; idx++)
+        {
+            path.push_back(buf[idx]);
+        }
+
+        std::cout << path << std::endl;
+
         // Include the slash
-        return std::string(buf, bytes+1);
+        return path;
     }
 
     std::string InitConfig()
