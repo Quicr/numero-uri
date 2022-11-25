@@ -101,8 +101,7 @@ public:
 
     uint128 EncodeUrl(const std::string &url);
 
-    std::string DecodeUrl(const std::string code_str,
-                          const std::uint32_t bit_format=64);
+    std::string DecodeUrl(const std::string code_str);
 
     bool Add(const std::string new_template);
     bool Remove(const std::uint64_t key);

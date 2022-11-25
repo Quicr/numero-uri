@@ -21,10 +21,11 @@ namespace
 
     TEST(Testuint128, SetGetStringValue)
     {
+        // TODO fix.
         uint128 value;
         std::string str_in = "132133453000";
 
-        value.FromString(str_in);
+        value.FromDecimalString(str_in);
 
         std::uint64_t output = value.GetValue(64, 0);
 

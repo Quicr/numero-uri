@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "NumericHelper.hh"
 
@@ -25,16 +26,23 @@ public:
 class uint128
 {
 public:
+    enum Representation
+    {
+        hex,
+        bin,
+        dec
+    };
+
     uint128()
     {
         InitDigits();
     }
 
-    uint128(std::string str_in, std::uint32_t bit_format=BIT_64)
+    uint128(std::string str_in)
     {
         InitDigits();
 
-        FromString(str_in, bit_format);
+        FromDecimalString(str_in);
     }
 
     void SetValue(std::uint64_t value,
@@ -82,62 +90,130 @@ public:
         return val;
     }
 
-    // Expects raw string with no delimiters
-    void FromString(const std::string str_in,
-                    const std::uint32_t bit_format=BIT_64)
+    void FromString(const std::string str_in, const Representation rep)
     {
-        if (bit_format > BIT_64)
-            throw uint128Exception("bit_format cannot be greater than 64");
-        if (MAX_SIZE % bit_format != 0)
-            throw uint128Exception(
-                "bit_format must be a factor of 128 that is less than 64");
+        switch (rep)
+        {
+            case hex:
+                FromHexString(str_in);
+                break;
+            case bin:
+                FromBinaryString(str_in);
+                break;
+            case dec:
+                FromDecimalString(str_in);
+                break;
+            default:
+                throw uint128Exception("Error. Given representation is not "
+                "recognized");
+        }
+    }
 
+    void FromHexString(std::string hex_in)
+    {
+        Clear();
+
+        // TODO
+    }
+
+    void FromBinaryString(std::string bin_in)
+    {
+        Clear();
+
+        // TODO
+    }
+
+    // Expects raw string with no delimiters
+    void FromDecimalString(std::string str_in)
+    {
         // Clear the bits in case this is happening not as an init
         Clear();
 
-        // Get the sig figs for the bit format
-        std::uint64_t sig_figs = NumericHelper::SigFigs(
-            NumericHelper::MaxValue(bit_format));
+        const std::uint64_t divisor = 2;
+        size_t back = str_in.length() - 1;
+        size_t front = 0;
+        std::uint64_t dividend;
+        std::uint64_t div_res;
+        std::string tmp_bin;
+        std::string tmp_dec;
+        bool first_non_zero = false;
 
-        std::uint32_t groupings = (MAX_SIZE/bit_format);
-        std::uint32_t group = 0;
-
-        std::uint64_t val;
-        std::uint64_t str_offset = 0;
-        std::uint32_t idx;
-        std::uint32_t lower_bound = 0;
-
-        bool end_of_string = false;
-        while (group < groupings && !end_of_string)
+        while (str_in.length() > 0)
         {
-            if (str_offset + sig_figs > str_in.length() && str_in.length() <= 64)
+            first_non_zero = false;
+            back = str_in.length() - 1;
+            front = 0;
+            dividend = str_in[front] - '0';
+
+            // If the value at the end is even then push a zero
+            // if odd push a 1
+            tmp_bin.push_back((str_in[back] % divisor));
+
+            // Proceed through the string until the last number
+            while (front++ <= back)
             {
-                val = std::stoull(str_in.substr(0));
-                end_of_string = true;
-            }
-            else
-            {
-                // Get the value from the string of sig_fig digits
-                val = std::stoull(str_in.substr(str_offset, sig_figs));
-                str_offset += sig_figs;
+                // Divide the number
+                div_res = dividend / divisor;
+
+                // If div is non zero set the first non zero flag
+                if (div_res)
+                    first_non_zero = true;
+
+                // Push in values if there was a non-zero
+                if (first_non_zero)
+                    tmp_dec.push_back(div_res + '0');
+
+                // Needs to be in because we need at least one last
+                // iteration and I want to protect overflow and invalid
+                // memory accessing.
+                if (front > back) continue;
+
+                // Long division math
+                dividend = dividend - (div_res * divisor);
+                dividend = (dividend * 10) + (str_in[front] - '0');
             }
 
-            // Push the value into the vector
-            idx = ((bit_format) + (bit_format * group));
-            while (idx-- != lower_bound)
-            {
-                digits[idx] = ((val & 0x1) == 0x1);
-                val = val >> 1;
-            }
-            lower_bound += bit_format;
-
-            group++;
+            str_in = tmp_dec;
+            tmp_dec.clear();
         }
+
+        if (tmp_bin.length() > digits.size())
+            throw uint128Exception("Error. The value of the given string"
+                                   " is larger than 128 bits");
+
+        // Copy it into the digits.
+        std::int64_t digit_idx = digits.size() - 1;
+        std::int64_t conv_idx = 0;
+        while (digit_idx >= 0 && conv_idx < tmp_bin.size())
+        {
+            digits[digit_idx] = tmp_bin[conv_idx];
+            digit_idx--;
+            conv_idx++;
+        }
+    }
+
+    std::string ToString(const Representation rep,
+                         const char delimiter='\0')
+    {
+        switch (rep)
+        {
+            case hex:
+                return ToHexString(delimiter);
+            case bin:
+                return ToBinaryString(delimiter);
+            case dec:
+                return ToDecimalString(delimiter);
+            default:
+                throw uint128Exception("Error. Given representation is not "
+                "recognized");
+        }
+
+        return "";
     }
 
     std::string ToBinaryString(const char delimiter='\0') const
     {
-        std::string str;
+        std::string str = "0b";
 
         for (std::uint32_t i = 0; i < digits.size(); ++i)
         {
@@ -155,7 +231,7 @@ public:
     std::string ToHexString(const char delimiter='\0',
                             const char prepend_zeros=true) const
     {
-        std::string str;
+        std::string str = "0x";
         bool first_non_zero = false;
         std::uint32_t i = 0;
         std::uint8_t val = digits[i];
@@ -196,47 +272,49 @@ public:
     }
 
     std::string ToDecimalString(const char delimiter='\0',
-                                const bool prepend_zeroes=true,
-                                const std::uint32_t bit_format=BIT_64) const
+                                const bool prepend_zeroes=true) const
     {
-        if (bit_format > BIT_64)
-            throw uint128Exception("bit_format cannot be greater than 64");
-        if (MAX_SIZE % bit_format != 0)
-            throw uint128Exception(
-                "bit_format must be a factor of 128 that is less than 64");
-
         std::string str;
 
-        std::uint32_t num_binary_groups = MAX_SIZE / bit_format;
-        std::uint32_t group = 0;
-
-        std::uint64_t value;
-        std::uint32_t iter;
-        std::uint32_t idx = 0;
-        std::uint64_t add_zeroes = 0;
-        while (group++ < num_binary_groups)
+        std::uint8_t overflow = 0;
+        bool first_non_zero = false;
+        char digit;
+        // Time for a slow conversion
+        for (size_t i = 0; i < digits.size(); ++i)
         {
-            value = 0;
-            iter = 0;
-            while (iter < bit_format && idx < MAX_SIZE)
+            // This is going to be O(n^2)
+            std::uint8_t bin = digits[i];
+
+            if (!first_non_zero && bin) first_non_zero = true;
+
+            if (!first_non_zero) continue;
+
+            for (std::int64_t j = str.length() - 1; j >= 0; --j)
             {
-                value = value << 1;
-                value += digits[idx++];
-                ++iter;
+                // double each value in the string
+                digit = (str[j] - '0') * 2;
+                str[j] = ((digit % 10) + overflow) + '0';
+                overflow = digit / 10;
             }
 
-            if (group > 1 || prepend_zeroes)
+            if (overflow)
             {
-                add_zeroes = NumPrependZeroes(value, bit_format);
-
-                while (add_zeroes-- != 0)
-                {
-                    str += '0';
-                }
+                str.insert(0, "1");
+                overflow = 0;
             }
 
-            str += std::to_string(value);
+            if (bin && str.length() == 0)
+            {
+                str.push_back('1');
+            }
+            else if (bin)
+            {
+                str[str.length() - 1] = str[str.length() - 1] + 1;
+            }
         }
+
+        str.push_back(' ');
+
         return str;
     }
 
@@ -300,4 +378,5 @@ private:
 
 
     std::vector<std::uint8_t> digits;
+    std::string value;
 };
