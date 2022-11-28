@@ -52,7 +52,7 @@ int main(int argc, char** argv)
         }
         else if (strcmp(argv[1], "add-template") == 0)
         {
-            if (!encoder.Add(argv[2]))
+            if (!encoder.AddTemplate(argv[2]))
                 throw UrlEncoderException("Failed to add template to list");
 
             // Save the template file
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
         else if (strcmp(argv[1], "remove-template") == 0)
         {
             std::uint64_t pen = std::stoull(argv[2]);
-            if (!encoder.Remove(pen))
+            if (!encoder.RemoveTemplate(pen))
                 throw UrlEncoderException("Failed to remove template from list");
 
             // Save the template file

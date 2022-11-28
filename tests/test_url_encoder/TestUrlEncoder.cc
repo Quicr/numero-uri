@@ -14,9 +14,9 @@ namespace
         TestUrlEncoder()
         {
             // Note, this does get tested later
-            encoder.Add("https://!{www.}!webex.com/<int24=11259375>/meeting<int16>/user<int16>");
-            encoder.Add("https://webex.com/<int24=1>/<int16>/meeting<int16>/user<int16>");
-            encoder.Add("https://!{www.}!webex.com/<int24=16777215>/party<int5>/building<int3>/floor<int39>/room<int25>/meeting<int32>");
+            encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259375>/meeting<int16>/user<int16>");
+            encoder.AddTemplate("https://webex.com/<int24=1>/<int16>/meeting<int16>/user<int16>");
+            encoder.AddTemplate("https://!{www.}!webex.com/<int24=16777215>/party<int5>/building<int3>/floor<int39>/room<int25>/meeting<int32>");
         }
 
         ~TestUrlEncoder() = default;
@@ -71,20 +71,20 @@ namespace
     TEST_F(TestUrlEncoder, DecodingErrors)
     {
         EXPECT_THROW({
-            encoder.Add("https://webex.com/<int24=2>/meeting<int16>/user<int16>");
+            encoder.AddTemplate("https://webex.com/<int24=2>/meeting<int16>/user<int16>");
             std::string url = "https://webex.com/2/meeting1234/user3213";
 
             uint128 encoded = encoder.EncodeUrl(url);
             std::string res = encoded.ToDecimalString();
 
-            encoder.Remove(2);
+            encoder.RemoveTemplate(2);
             std::string decoded = encoder.DecodeUrl(res);
         }, UrlDecodeNoMatchException);
     }
 
     TEST_F(TestUrlEncoder, AddTemplate)
     {
-        encoder.Add("https://!{www.}!webex.com/<int24=11259376>"
+        encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259376>"
             "/meeting<int16>/user<int16>");
 
         std::cout << encoder.GetTemplates().size() << std::endl;
@@ -105,7 +105,7 @@ namespace
 
     TEST_F(TestUrlEncoder, AddBigTemplate)
     {
-        encoder.Add("https://!{www.}!webex.com/<int24=16777216>/party<int5>"
+        encoder.AddTemplate("https://!{www.}!webex.com/<int24=16777216>/party<int5>"
             "/building<int3>/floor<int39>/room<int25>/meeting<int32>");
 
         auto output_template = encoder.GetTemplate(16777216);
@@ -124,15 +124,15 @@ namespace
 
     TEST_F(TestUrlEncoder, RemoveTemplate)
     {
-        encoder.Add("https://!{www.}!webex.com/<int24=11259376>/meeting<int16>"
+        encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259376>/meeting<int16>"
             "/user<int16>");
-        encoder.Remove(11259376);
+        encoder.RemoveTemplate(11259376);
         ASSERT_EQ(3, encoder.GetTemplates().size());
     }
 
     TEST_F(TestUrlEncoder, GetTemplate)
     {
-        encoder.Add("https://!{www.}!webex.com/<int24=23>/meeting<int16>"
+        encoder.AddTemplate("https://!{www.}!webex.com/<int24=23>/meeting<int16>"
             "/user<int16>");
 
         auto output_template = encoder.GetTemplate(23);
@@ -145,7 +145,7 @@ namespace
 
     TEST_F(TestUrlEncoder, GetTemplates)
     {
-        encoder.Add("https://!{www.}!webex.com/<int24=11259374>/meeting<int16>"
+        encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259374>/meeting<int16>"
             "/user<int16>");
 
         auto output = encoder.GetTemplate(11259374);
@@ -158,7 +158,7 @@ namespace
     TEST_F(TestUrlEncoder, ToJson)
     {
         UrlEncoder tmp_encoder;
-        tmp_encoder.Add("https://!{www.}!webex.com/<int24=11259374>"
+        tmp_encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259374>"
             "/meeting<int16>/user<int16>");
         json temp;
         temp["pen"] = 11259374;

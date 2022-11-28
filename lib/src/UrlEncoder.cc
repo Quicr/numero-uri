@@ -8,78 +8,78 @@
 
 uint128 UrlEncoder::EncodeUrl(const std::string &url)
 {
-    // TODO there is a bug here..
     // Originally we just cycled through the templates
-    // but now we need to read the PEN value and check if it is
-    // in the templates.
 
     std::vector<std::uint64_t> numerical_groups;
 
     // To extract the 3 groups from each url format
     std::smatch matches;
 
+    std::uint64_t pen;
     UrlEncoder::url_template selected_template;
-
-    // Get the pen from the URL
-    if (!std::regex_search(url, matches, std::regex("(\\d+)")))
-    {
-        throw UrlEncoderException("Error. No PEN found");
-    }
-
-    // Get the PEN from the matches which should be the first number
-    std::uint64_t pen = std::stoull(matches[0].str());
-
+    bool found_template = false;
     for (auto temp : templates)
     {
-        std::cout << temp.second.url << std::endl;
+        // Find match
+        if (!std::regex_match(url, std::regex(temp.second.url)))
+            continue;
+
+        pen = temp.first;
+        selected_template = temp.second;
+
+
+        found_template = true;
+        break;
     }
 
-    // Check if the template is in the list of templates
-    if (templates.find(pen) == templates.end())
-        throw UrlEncoderNoMatchException("Error. No template for PEN " + matches[0].str());
-
-    // Get the template based on the PEN
-    selected_template = templates.at(pen);
+    if (!found_template)
+        throw UrlEncoderException("Error. No match found for given url: "
+            + url);
 
     // If there is not a match then there is no template for this PEN
     if (!std::regex_match(url, matches, std::regex(selected_template.url)))
         throw UrlEncoderNoMatchException("Error. No match for url: " + url);
 
     // Need the same number of numbers as the template expects
-    if (matches.size() - 1 != selected_template.bits.size())
-        throw UrlEncoderNoMatchException("Error. Match is missing values for the given template");
+    if (matches.size() != selected_template.bits.size())
+        throw UrlEncoderNoMatchException("Error. Match is missing values for "
+            "the given template");
+
+
+    std::uint64_t val = pen;
+    std::uint32_t bits = selected_template.bits[0];
+    std::uint32_t offset_bits = 0;
+    std::uint64_t max_val; // FIX
+
+    uint128 encoded;
+
+    // Set the PEN value and bits
+    encoded.SetValue(val, bits, offset_bits);
+    offset_bits += bits;
 
     // Skip the first group since its the whole match
     for (std::uint32_t i = 1; i < matches.size(); i++)
     {
-        std::uint64_t val = std::stoull(matches[i].str());
-        std::uint32_t bits = selected_template.bits[i-1];
-        std::uint64_t max_val = NumericHelper::MaxValue(bits);
-
-        if (val > max_val)
-        {
-            throw UrlEncoderOutOfRangeException(
-                "Error. Out of range. Group " + std::to_string(i)
-                + " value is " + std::to_string(val)
-                + " but the max value is " + std::to_string(max_val),
-                i, val);
-        }
-
-        // Keep track of each numerical group
-        numerical_groups.push_back(val);
-    }
-
-    // TODO move this into the above loop...
-    uint128 encoded;
-    std::uint32_t offset_bits = 0;
-    std::uint32_t bits = 0;
-    for (std::uint32_t i = 0; i < numerical_groups.size(); ++i)
-    {
-        // Get the amount of bits in the parallel array in numerical groups
+        val = std::stoull(matches[i].str());
         bits = selected_template.bits[i];
 
+        // FIX this should probably check the bits and the order it is in
+        // and determine what the maximum value for it can be.
+        // ex. bits = [3, 2]; max val for bits[0] = 28 because the last
+        // two bits is for the other digit
+        // max_val = NumericHelper::MaxValue(bits);
+
+        // if (val > max_val)
+        // {
+        //     throw UrlEncoderOutOfRangeException(
+        //         "Error. Out of range. Group " + std::to_string(i)
+        //         + " value is " + std::to_string(val)
+        //         + " but the max value is " + std::to_string(max_val),
+        //         i, val);
+        // }
+
         // Set the value in the uint128 variable
-        encoded.SetValue(numerical_groups[i], bits, offset_bits);
+        encoded.SetValue(val, bits, offset_bits);
 
         // Slide the bit window over
         offset_bits += bits;
@@ -88,6 +88,7 @@ uint128 UrlEncoder::EncodeUrl(const std::string &url)
     return encoded;
 }
 
+// FIX
 std::string UrlEncoder::DecodeUrl(const std::string code_str,
                                   const uint128::Representation rep)
 {
@@ -190,11 +191,11 @@ std::string UrlEncoder::DecodeUrl(const std::string code_str,
     return decoded;
 }
 
-bool UrlEncoder::Add(const std::string new_template)
+bool UrlEncoder::AddTemplate(const std::string new_template)
 {
     // The first value must be filled in with their PEN
     const std::string example =
-        "http://!{www.}!webex.com/<int24=777>/meeting<int16>/user<int16>";
+        "http://!{www.}!webex.com<int24=777>/meeting<int16>/user<int16>";
 
     // If there is a !{...}! it is an optional group
     const std::regex optional_regex("!\\{(.+)\\}!");
@@ -216,9 +217,6 @@ bool UrlEncoder::Add(const std::string new_template)
 
     // Put everything up to the first option into the regex
     temp.url += new_template.substr(0, start-1);
-
-    // Add the regex for a digit
-    temp.url += "(\\d+)";
 
     // Get the pen from the string
     end = new_template.find('>', start);
@@ -342,7 +340,7 @@ bool UrlEncoder::Add(const std::string new_template)
     return true;
 }
 
-bool UrlEncoder::Remove(const std::uint64_t key)
+bool UrlEncoder::RemoveTemplate(const std::uint64_t key)
 {
     if (templates.find(key) == templates.end())
     {

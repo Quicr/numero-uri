@@ -104,8 +104,8 @@ public:
     std::string DecodeUrl(const std::string code_str,
         const uint128::Representation rep=uint128::Representation::sym);
 
-    bool Add(const std::string new_template);
-    bool Remove(const std::uint64_t key);
+    bool AddTemplate(const std::string new_template);
+    bool RemoveTemplate(const std::uint64_t key);
     json ToJson() const;
     bool FromJson(const json& data);
     void Clear();
