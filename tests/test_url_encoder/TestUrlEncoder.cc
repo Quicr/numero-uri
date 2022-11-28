@@ -71,24 +71,6 @@ namespace
     TEST_F(TestUrlEncoder, DecodingErrors)
     {
         EXPECT_THROW({
-            std::string url = "https://webex.com/11259375/meeting1234/user3213";
-
-            uint128 encoded = encoder.EncodeUrl(url);
-            std::string res = encoded.ToDecimalString();
-
-            std::string decoded = encoder.DecodeUrl(res, 65);
-        }, uint128Exception);
-
-        EXPECT_THROW({
-            std::string url = "https://webex.com/11259375/meeting1234/user3213";
-
-            uint128 encoded = encoder.EncodeUrl(url);
-            std::string res = encoded.ToDecimalString();
-
-            std::string decoded = encoder.DecodeUrl(res, 33);
-        }, uint128Exception);
-
-        EXPECT_THROW({
             encoder.Add("https://webex.com/<int24=2>/meeting<int16>/user<int16>");
             std::string url = "https://webex.com/2/meeting1234/user3213";
 

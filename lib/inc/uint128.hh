@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include "NumericHelper.hh"
 
@@ -28,6 +27,7 @@ class uint128
 public:
     enum Representation
     {
+        sym, // Implies string contrains format (0x, 0b, 0d).
         hex,
         bin,
         dec
@@ -38,11 +38,11 @@ public:
         InitDigits();
     }
 
-    uint128(std::string str_in)
+    uint128(const std::string str_in, const Representation rep)
     {
         InitDigits();
 
-        FromDecimalString(str_in);
+        FromString(str_in, rep);
     }
 
     void SetValue(std::uint64_t value,
@@ -90,10 +90,13 @@ public:
         return val;
     }
 
-    void FromString(const std::string str_in, const Representation rep)
+    void FromString(const std::string &str_in, const Representation rep)
     {
         switch (rep)
         {
+            case sym:
+                FromString(str_in);
+                break;
             case hex:
                 FromHexString(str_in);
                 break;
@@ -109,18 +112,86 @@ public:
         }
     }
 
+    void FromString(std::string str_in)
+    {
+        if (str_in.length() < 3)
+            throw uint128Exception("Error. The length of the input string must"
+            " contain a number system symbol and values. With a min length of 3"
+            ". ex. 0xFA231");
+
+        // Check the first two symbols for 0x, 0b, 0d
+        // Strip out the symbols
+        char sym[] = { str_in[0], str_in[1], '\0' };
+
+        str_in = str_in.substr(2);
+
+        if (strcmp(sym, "0x") == 0)
+            FromHexString(str_in);
+        else if (strcmp(sym, "0b") == 0)
+            FromBinaryString(str_in);
+        else if (strcmp(sym, "0d") == 0)
+            FromDecimalString(str_in);
+        else
+            throw uint128Exception("Error. No number symbol format given."
+            " ex. 0x132 | 0b1101 | 0d1023");
+    }
+
     void FromHexString(std::string hex_in)
     {
+        if (hex_in.length() * 4 > digits.size())
+            throw uint128Exception("Error. Hex string contains more signficiant"
+                " digits than the size of the digit array");
+
         Clear();
 
-        // TODO
+        std::int64_t digit_idx = digits.size() - 1;
+        char hex_ch;
+
+        // Start from the end
+        for (std::int64_t i = hex_in.size() - 1; i >= 0; --i)
+        {
+            // Look at each letter
+            hex_ch = hex_in[i];
+            if (hex_ch >= '0' && hex_ch <= '9')
+                hex_ch -= '0';
+            else if (hex_ch >= 'a' && hex_ch <= 'f')
+                hex_ch -= 87;
+            else if (hex_ch >= 'A' && hex_ch <= 'F')
+                hex_ch -= 55;
+            else
+                throw uint128Exception(std::string("Error. Letter ") + hex_ch +
+                    std::string(" is not a hexadecimal value."));
+
+            // Convert 0-15 to bin
+            uint16_t iter = 0;
+            while (hex_ch > 0 && digit_idx >= 0)
+            {
+                int16_t res = hex_ch % 2;
+
+                digits[digit_idx--] = hex_ch % 2;
+                hex_ch /= 2;
+                iter++;
+            }
+
+            digit_idx = digit_idx - (4 - iter);
+        }
     }
 
     void FromBinaryString(std::string bin_in)
     {
+        if (bin_in.length() > digits.size())
+            throw uint128Exception("Error. Binary string contains more "
+            "significant digits than the size of the digit array.");
+
         Clear();
 
-        // TODO
+        // Assume big endian
+        std::int64_t digits_idx = digits.size() - 1;
+        std::int64_t bin_in_idx = bin_in.length() - 1;
+        while (digits_idx >= 0 && bin_in_idx >= 0)
+        {
+            digits[digits_idx--] = bin_in[bin_in_idx--] - '0';
+        }
     }
 
     // Expects raw string with no delimiters
@@ -274,7 +345,7 @@ public:
     std::string ToDecimalString(const char delimiter='\0',
                                 const bool prepend_zeroes=true) const
     {
-        std::string str;
+        std::string str = "0d";
 
         std::uint8_t overflow = 0;
         bool first_non_zero = false;

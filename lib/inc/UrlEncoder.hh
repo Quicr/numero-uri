@@ -101,7 +101,8 @@ public:
 
     uint128 EncodeUrl(const std::string &url);
 
-    std::string DecodeUrl(const std::string code_str);
+    std::string DecodeUrl(const std::string code_str,
+        const uint128::Representation rep=uint128::Representation::sym);
 
     bool Add(const std::string new_template);
     bool Remove(const std::uint64_t key);

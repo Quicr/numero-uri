@@ -88,12 +88,13 @@ uint128 UrlEncoder::EncodeUrl(const std::string &url)
     return encoded;
 }
 
-std::string UrlEncoder::DecodeUrl(const std::string code_str)
+std::string UrlEncoder::DecodeUrl(const std::string code_str,
+                                  const uint128::Representation rep)
 {
     const std::uint32_t Pen_Bits = 24;
 
     // Convert the string to the uint128
-    uint128 code(code_str);
+    uint128 code(code_str, rep);
 
     std::string decoded;
 

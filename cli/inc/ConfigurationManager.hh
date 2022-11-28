@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string>
 #include <fstream>
+#include <iostream>
 
 #include "nlohmann/json.hpp"
 // Just because writing nlohmann is hard.
@@ -46,8 +47,6 @@ namespace ConfigurationManager
         {
             path.push_back(buf[idx]);
         }
-
-        std::cout << path << std::endl;
 
         // Include the slash
         return path;
