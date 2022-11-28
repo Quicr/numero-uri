@@ -29,12 +29,12 @@ To run the executable from the CLI
 - build/bin/numero_uri [args]
 - Available arguments and formats
     - encode            Encodes a URL depending on the current loaded templates
-        - ex. encode https://webex.com/1/meeting1234/user3213
+        - ex. encode https://webex.com/meeting1234/user3213
     - decode            Decodes a uint128 string from the encode function
     - config            Changes a configuration setting (located in executable directory)
         - ex. config template-file /path/to/template.json
     - add-template      Adds a template to the templates file
-        - ex. add-template https://www.webex.com/\<int24=123\>/meeting\<int16\>/user\<int16\>
+        - ex. add-template https://www.webex.com\<int24=123\>/meeting\<int16\>/user\<int16\>
     - remove-template   Removes a template from the templates file
         - ex. remove-template 123
 
@@ -48,12 +48,12 @@ To build the tests and run them
 ### Docker
 - Add a template
 
-    ```make args='add-template https://webex.com/<int24=123>/meeting<int16>/room<int16>'```
+    ```make args='add-template https://webex.com<int24=123>/meeting<int16>/room<int16>'```
 
     Creates a template that receives 3 numbers groups in a URI according to the pattern given. The first group **<int24=123>** is the only time a group has a specified number and is required. The value must be a unique identifier for this template.
 - Encode a template
 
-    ```make args='encode https://webex.com/123/meeting2/room56'```
+    ```make args='encode https://webex.com/meeting2/room56'```
 
     This will output the encoded number string **`0000013523996378521600000000000000000000`**. Which can be fed back in using the next command.
 
@@ -61,7 +61,7 @@ To build the tests and run them
 
     ```make args='decode 0000013523996378521600000000000000000000'```
 
-    This will output the URI **`https://webex.com/123/meeting2/room56`** according to the template provided with the unique identifier.
+    This will output the URI **`https://webex.com/meeting2/room56`** according to the template provided with the unique identifier.
 
 - Remove a template
 
@@ -78,10 +78,10 @@ To build the tests and run them
 ### Local - Linux
 - Add a template
 
-    ```./build/bin/numero_uri add-template https://webex.com/<int24=123>/meeting<int16>/room<int16>```
+    ```./build/bin/numero_uri add-template https://webex.com<int24=123>/meeting<int16>/room<int16>```
 - Encode a template
 
-    ```./build/bin/numero_uri encode https://webex.com/123/meeting2/room56```
+    ```./build/bin/numero_uri encode https://webex.com/meeting2/room56```
 
 - Decode a number string
 

@@ -12,9 +12,9 @@ if (GIT_SUBMODULE)
     execute_process(COMMAND ${GIT_EXECUTABLE} submodule
         update --init --recursive
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/json
-        RESULT_VARIABLE JSON_SUBMOD_RES)
-    if (NOT JSON_SUBMOD_RES EQUAL "0")
-        message(FATAL_ERROR "git module update --init --recursive failed with ${JSON_SUBMOD_RES}, please checkout submodules")
+        RESULT_VARIABLE SUBMOD_RES)
+    if (NOT SUBMOD_RES EQUAL "0")
+        message(FATAL_ERROR "git submodule update --init --recursive failed with ${SUBMOD_RES}, please checkout submodules")
     endif()
     add_subdirectory(json)
 
@@ -23,9 +23,9 @@ if (GIT_SUBMODULE)
         execute_process(COMMAND ${GIT_EXECUTABLE} submodule
             update --init --recursive
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/googletest
-            RESULT_VARIABLE JSON_SUBMOD_RES)
-        if (NOT JSON_SUBMOD_RES EQUAL "0")
-            message(FATAL_ERROR "git module update --init --recursive failed with ${JSON_SUBMOD_RES}, please checkout submodules")
+            RESULT_VARIABLE SUBMOD_RES)
+        if (NOT SUBMOD_RES EQUAL "0")
+            message(FATAL_ERROR "git submodule update --init --recursive failed with ${SUBMOD_RES}, please checkout submodules")
         endif()
         add_subdirectory(googletest)
         # Prevent override the parent project's compiler/linker settings for windows

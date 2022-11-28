@@ -27,7 +27,7 @@ class uint128
 public:
     enum Representation
     {
-        sym, // Implies string contrains format (0x, 0b, 0d).
+        sym, // Implies string contains format (0x, 0b, 0d).
         hex,
         bin,
         dec
@@ -119,6 +119,8 @@ public:
             " contain a number system symbol and values. With a min length of 3"
             ". ex. 0xFA231");
 
+        Clear();
+
         // Check the first two symbols for 0x, 0b, 0d
         // Strip out the symbols
         char sym[] = { str_in[0], str_in[1], '\0' };
@@ -139,7 +141,7 @@ public:
     void FromHexString(std::string hex_in)
     {
         if (hex_in.length() * 4 > digits.size())
-            throw uint128Exception("Error. Hex string contains more signficiant"
+            throw uint128Exception("Error. Hex string contains more significant"
                 " digits than the size of the digit array");
 
         Clear();
