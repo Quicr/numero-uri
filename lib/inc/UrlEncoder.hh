@@ -31,7 +31,7 @@ class UrlEncoderOutOfRangeException : public std::runtime_error
 public:
     explicit UrlEncoderOutOfRangeException(const std::string &what_arg,
                                            const std::uint64_t group,
-                                           const std::uint64_t value) :
+                                           const std::string value) :
         std::runtime_error(what_arg)
     {
         det.group = group;
@@ -40,7 +40,7 @@ public:
 
     explicit UrlEncoderOutOfRangeException(const char *what_arg,
                                            const std::uint64_t group,
-                                           const std::uint64_t value) :
+                                           const std::string value) :
         std::runtime_error(what_arg)
     {
         det.group = group;
@@ -50,7 +50,7 @@ public:
     struct UrlEncoderOutOfRangeDetails
     {
         std::uint64_t group;
-        std::uint64_t value;
+        std::string value;
     };
 
     const UrlEncoderOutOfRangeDetails details() const

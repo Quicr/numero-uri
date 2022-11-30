@@ -3,23 +3,10 @@
 
 namespace
 {
-    TEST(TestNumericHelper, MaxValue)
+    TEST(TestNumericHelper, DoubleStringValue)
     {
-        // Test for the max value based on bits
-        std::uint64_t output = NumericHelper::MaxValue(4);
-        ASSERT_EQ(15, output);
-
-        output = NumericHelper::MaxValue(5);
-        ASSERT_EQ(31, output);
-
-        output = NumericHelper::MaxValue(16);
-        ASSERT_EQ(UINT16_MAX, output);
-
-        output = NumericHelper::MaxValue(32);
-        ASSERT_EQ(UINT32_MAX, output);
-
-        output = NumericHelper::MaxValue(64);
-        ASSERT_EQ(UINT64_MAX, output);
+        // TODO
+        ASSERT_EQ(true, false);
     }
 
     TEST(TestNumericHelper, SigFigs)

@@ -46,10 +46,10 @@ uint128 UrlEncoder::EncodeUrl(const std::string &url)
             "the given template");
 
 
-    std::uint64_t val = pen;
+    uint128 val = pen;
     std::uint32_t bits = selected_template.bits[0];
     std::uint32_t offset_bits = 0;
-    std::uint64_t max_val; // FIX
+    uint128 max_val;
 
     uint128 encoded;
 
@@ -60,23 +60,20 @@ uint128 UrlEncoder::EncodeUrl(const std::string &url)
     // Skip the first group since its the whole match
     for (std::uint32_t i = 1; i < matches.size(); i++)
     {
-        val = std::stoull(matches[i].str());
+        val.FromString(matches[i].str(), uint128::Representation::dec);
         bits = selected_template.bits[i];
 
-        // FIX this should probably check the bits and the order it is in
-        // and determine what the maximum value for it can be.
-        // ex. bits = [3, 2]; max val for bits[0] = 28 because the last
-        // two bits is for the other digit
-        // max_val = NumericHelper::MaxValue(bits);
+        // Ensure the value isn't greater than the support bits
+        max_val = uint128::BitValue(bits);
 
-        // if (val > max_val)
-        // {
-        //     throw UrlEncoderOutOfRangeException(
-        //         "Error. Out of range. Group " + std::to_string(i)
-        //         + " value is " + std::to_string(val)
-        //         + " but the max value is " + std::to_string(max_val),
-        //         i, val);
-        // }
+        if (val > max_val)
+        {
+            throw UrlEncoderOutOfRangeException(
+                "Error. Out of range. Group " + std::to_string(i)
+                + " value is " + val.ToDecimalString()
+                + " but the max value is " + max_val.ToDecimalString(),
+                i, val.ToDecimalString());
+        }
 
         // Set the value in the uint128 variable
         encoded.SetValue(val, bits, offset_bits);
@@ -88,10 +85,10 @@ uint128 UrlEncoder::EncodeUrl(const std::string &url)
     return encoded;
 }
 
-// FIX
 std::string UrlEncoder::DecodeUrl(const std::string code_str,
                                   const uint128::Representation rep)
 {
+    // PEN bits should always be 24?
     const std::uint32_t Pen_Bits = 24;
 
     // Convert the string to the uint128
@@ -132,7 +129,7 @@ std::string UrlEncoder::DecodeUrl(const std::string code_str,
             }
         }
 
-        // Find and groups and make note of them
+        // Find groups and make note of them
         if (ch == '(')
         {
             // Check the next couple characters for non matching-groups
@@ -166,11 +163,12 @@ std::string UrlEncoder::DecodeUrl(const std::string code_str,
     size_t str_offset = 0;
     size_t insert_idx;
     std::string insert_str;
-    std::uint32_t bit_offset = 0;
+    std::uint32_t bit_offset = temp.bits[0];
     for (std::uint32_t i = 0; i < group_indices.size(); i++)
     {
         // Get the number of bits for this number
-        num_bits = temp.bits[i];
+        // skip the pen bits
+        num_bits = temp.bits[i+1];
 
         // Calc how much we've inserted into the string
         str_offset += insert_str.length();

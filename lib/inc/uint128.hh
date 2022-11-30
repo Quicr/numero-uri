@@ -38,6 +38,14 @@ public:
         InitDigits();
     }
 
+    uint128(const std::uint64_t val_in)
+    {
+        // Put in lower bits
+        std::cout << "also here " << std::endl;
+        InitDigits();
+        SetValue(val_in, 64, 64);
+    }
+
     uint128(const std::string str_in, const Representation rep)
     {
         InitDigits();
@@ -45,14 +53,22 @@ public:
         FromString(str_in, rep);
     }
 
+    uint128& operator=(const std::uint64_t val_in)
+    {
+        std::cout << "here" << std::endl;
+        InitDigits();
+        this->SetValue(val_in, 64, 64);
+        return *this;
+    }
+
     void SetValue(std::uint64_t value,
                   const std::uint32_t num_bits,
                   const std::uint16_t msb_offset)
     {
         if (num_bits > BIT_64)
-            throw uint128Exception("Max num bits is 64");
+            throw uint128Exception("Error. Max num bits is 64");
         if (msb_offset > MAX_SIZE - 1)
-            throw uint128Exception("msb_offset is out of range. Max 127");
+            throw uint128Exception("Error. msb offset is out of range. Max 127");
 
         const std::uint64_t bit_mask = 0x8000000000000000;
 
@@ -66,6 +82,29 @@ public:
             digits[idx++] = ((value & bit_mask) == bit_mask);
             value = value << 1;
             ++iter;
+        }
+    }
+
+    void SetValue(const uint128& value,
+                  const std::uint16_t num_bits,
+                  const std::uint16_t msb_offset)
+    {
+        if (msb_offset > MAX_SIZE - 1)
+            throw uint128Exception("Error. msb offset is out of range. "
+                "Max 127.");
+
+        if (msb_offset + num_bits > MAX_SIZE - 1)
+            throw uint128Exception("Error. Copied data is larger than "
+                "Max size of 127.");
+
+        std::uint16_t to_idx = msb_offset;
+        std::uint16_t from_idx = value.digits.size() - num_bits;
+
+        while (to_idx < digits.size() - 1 && from_idx < value.digits.size())
+        {
+            digits[to_idx] = value.at(from_idx);
+            to_idx++;
+            from_idx++;
         }
     }
 
@@ -347,7 +386,7 @@ public:
     std::string ToDecimalString(const char delimiter='\0',
                                 const bool prepend_zeroes=true) const
     {
-        std::string str = "0d";
+        std::string str;
 
         std::uint8_t overflow = 0;
         bool first_non_zero = false;
@@ -386,8 +425,7 @@ public:
             }
         }
 
-        str.push_back(' ');
-
+        str.insert(0, "0d");
         return str;
     }
 
@@ -402,6 +440,54 @@ public:
         {
             digits[i] = 0;
         }
+    }
+
+    const std::vector<uint8_t>& Data() const
+    {
+        return digits;
+    }
+
+    const bool operator>(const uint128& other) const
+    {
+        const std::vector<uint8_t> other_digits = other.Data();
+        for (std::uint32_t i = 0; i < digits.size(); i++)
+        {
+            if (digits[i] > other_digits[i])
+                return true;
+            else if (digits[i] < other_digits[i])
+                return false;
+        }
+
+        return false;
+    }
+
+    std::uint8_t& operator[](const std::uint16_t idx)
+    {
+        if (idx > digits.size())
+            throw uint128Exception("Error. Index out of range");
+
+        return digits[idx];
+    }
+
+    const std::uint8_t at(const std::uint16_t idx) const
+    {
+        if (idx > digits.size())
+            throw uint128Exception("Error. Index out of range");
+
+        return digits[idx];
+    }
+
+    static uint128 BitValue(std::uint32_t bits)
+    {
+        uint128 val;
+
+        std::uint64_t i = val.digits.size() - 1;
+        while (bits-- > 0)
+        {
+            val.digits[i--] = 1;
+        }
+
+        return val;
     }
 
 private:
@@ -449,7 +535,5 @@ private:
         }
     }
 
-
     std::vector<std::uint8_t> digits;
-    std::string value;
 };
