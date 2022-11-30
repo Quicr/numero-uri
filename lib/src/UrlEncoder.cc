@@ -1,10 +1,7 @@
 #include "UrlEncoder.hh"
-
 #include <regex>
-
 #include "NumericHelper.hh"
 
-#include <iostream>
 
 uint128 UrlEncoder::EncodeUrl(const std::string &url)
 {
@@ -85,14 +82,18 @@ uint128 UrlEncoder::EncodeUrl(const std::string &url)
     return encoded;
 }
 
-std::string UrlEncoder::DecodeUrl(const std::string code_str,
+std::string UrlEncoder::DecodeUrl(const std::string &code_str,
                                   const uint128::Representation rep)
+{
+    // Convert the string to the uint128
+    uint128 code(code_str, rep);
+    return DecodeUrl(code);
+}
+
+std::string UrlEncoder::DecodeUrl(const uint128 &code)
 {
     // PEN bits should always be 24?
     const std::uint32_t Pen_Bits = 24;
-
-    // Convert the string to the uint128
-    uint128 code(code_str, rep);
 
     std::string decoded;
 
@@ -189,11 +190,11 @@ std::string UrlEncoder::DecodeUrl(const std::string code_str,
     return decoded;
 }
 
-bool UrlEncoder::AddTemplate(const std::string new_template)
+void UrlEncoder::AddTemplate(const std::string& new_template)
 {
     // The first value must be filled in with their PEN
     const std::string example =
-        "http://!{www.}!webex.com<int24=777>/meeting<int16>/user<int16>";
+        "https://!{www.}!webex.com<int24=777>/meeting<int16>/user<int16>";
 
     // If there is a !{...}! it is an optional group
     const std::regex optional_regex("!\\{(.+)\\}!");
@@ -334,23 +335,21 @@ bool UrlEncoder::AddTemplate(const std::string new_template)
     }
 
     templates[pen_value] = temp;
-
-    return true;
 }
 
-bool UrlEncoder::RemoveTemplate(const std::uint64_t key)
+bool UrlEncoder::RemoveTemplate(const std::uint64_t pen)
 {
-    if (templates.find(key) == templates.end())
+    if (templates.find(pen) == templates.end())
     {
         return false;
     }
 
-    templates.erase(key);
+    templates.erase(pen);
 
     return true;
 }
 
-json UrlEncoder::ToJson() const
+json UrlEncoder::TemplatesToJson() const
 {
     // Create the template string
     json j;
@@ -374,7 +373,7 @@ json UrlEncoder::ToJson() const
     return j;
 }
 
-bool UrlEncoder::FromJson(const json& data)
+void UrlEncoder::TemplatesFromJson(const json& data)
 {
     for (unsigned int i = 0; i < data.size(); i++)
     {
@@ -390,8 +389,6 @@ bool UrlEncoder::FromJson(const json& data)
         // Push the values onto the templates list
         templates[static_cast<std::uint64_t>(data[i]["pen"])] = temp;
     }
-
-    return true;
 }
 
 void UrlEncoder::Clear()

@@ -25,7 +25,7 @@ int main(int argc, char** argv)
         std::string template_file = ConfigurationManager::GetTemplateFilePath();
 
         json data = TemplateFileManager::LoadTemplatesFromFile(template_file);
-        encoder.FromJson(data);
+        encoder.TemplatesFromJson(data);
         if (strcmp(argv[1], "encode") == 0)
         {
             // encode test - https://webex.com/1/meeting1234/user3213
@@ -46,17 +46,16 @@ int main(int argc, char** argv)
                 std::string f_path = ConfigurationManager::GetTemplateFilePath();
                 encoder.Clear();
                 json data = TemplateFileManager::LoadTemplatesFromFile(f_path);
-                encoder.FromJson(data);
+                encoder.TemplatesFromJson(data);
                 std::cout << "Updated template file location\n";
             }
         }
         else if (strcmp(argv[1], "add-template") == 0)
         {
-            if (!encoder.AddTemplate(argv[2]))
-                throw UrlEncoderException("Failed to add template to list");
+            encoder.AddTemplate(argv[2]);
 
             // Save the template file
-            json data = encoder.ToJson();
+            json data = encoder.TemplatesToJson();
             TemplateFileManager::SaveTemplates(template_file, data);
             std::cout << "Added template.\n";
         }

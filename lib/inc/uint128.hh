@@ -41,7 +41,6 @@ public:
     uint128(const std::uint64_t val_in)
     {
         // Put in lower bits
-        std::cout << "also here " << std::endl;
         InitDigits();
         SetValue(val_in, 64, 64);
     }
@@ -55,7 +54,6 @@ public:
 
     uint128& operator=(const std::uint64_t val_in)
     {
-        std::cout << "here" << std::endl;
         InitDigits();
         this->SetValue(val_in, 64, 64);
         return *this;

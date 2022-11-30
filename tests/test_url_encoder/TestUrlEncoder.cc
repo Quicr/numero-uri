@@ -155,7 +155,7 @@ namespace
         ASSERT_EQ(std::vector<std::uint32_t>({24, 16, 16}), output.bits);
     }
 
-    TEST_F(TestUrlEncoder, ToJson)
+    TEST_F(TestUrlEncoder, TemplatesToJson)
     {
         UrlEncoder tmp_encoder;
         tmp_encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259374>"
@@ -169,10 +169,10 @@ namespace
         json real;
         real.push_back(temp);
 
-        ASSERT_EQ(tmp_encoder.ToJson(), real);
+        ASSERT_EQ(tmp_encoder.TemplatesToJson(), real);
     }
 
-    TEST_F(TestUrlEncoder, FromJson)
+    TEST_F(TestUrlEncoder, TemplatesFromJson)
     {
         json temp;
         temp["pen"] = 11259374;
@@ -182,7 +182,7 @@ namespace
 
         json j;
         j.push_back(temp);
-        encoder.FromJson(j);
+        encoder.TemplatesFromJson(j);
 
         auto output = encoder.GetTemplate(11259374);
 
