@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
 #include <string>
 
-#include "uint128.hh"
+#include "big_uint.hh"
 
 namespace
 {
-    TEST(Testuint128, SetGetNumericValue)
+    TEST(Testbig_uint, SetGetNumericValue)
     {
-        uint128 value;
+        big_uint value;
 
         uint64_t in = 0;
         uint32_t bits = 4;
@@ -19,10 +19,10 @@ namespace
         ASSERT_EQ(output, in);
     }
 
-    TEST(Testuint128, SetGetStringValue)
+    TEST(Testbig_uint, SetGetStringValue)
     {
         // TODO fix.
-        uint128 value;
+        big_uint value;
         std::string str_in = "132133453000";
 
         value.FromDecimalString(str_in);
@@ -32,9 +32,9 @@ namespace
         ASSERT_EQ(output, std::stoull(str_in));
     }
 
-    TEST(Testuint128, ToBinary)
+    TEST(Testbig_uint, ToBinary)
     {
-        uint128 value;
+        big_uint value;
 
         uint64_t in = 486527;
         uint32_t bits = 64;
@@ -48,9 +48,9 @@ namespace
         ASSERT_EQ(bin_out, actual);
     }
 
-    TEST(Testuint128, ToString)
+    TEST(Testbig_uint, ToString)
     {
-        uint128 value;
+        big_uint value;
 
         uint64_t in = 123120534320;
         uint32_t bits = 64;
@@ -63,9 +63,9 @@ namespace
         ASSERT_EQ(str_out, actual);
     }
 
-    TEST(Testuint128, Clear)
+    TEST(Testbig_uint, Clear)
     {
-        uint128 value;
+        big_uint value;
 
         uint64_t first = 123120534320;
         uint64_t second = 1;

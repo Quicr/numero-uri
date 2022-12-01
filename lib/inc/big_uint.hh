@@ -5,24 +5,23 @@
 
 #include "NumericHelper.hh"
 
-#define MAX_SIZE 128
 #define BIT_64 64
 
-class uint128Exception : public std::runtime_error
+class big_uint_exception : public std::runtime_error
 {
 public:
-    explicit uint128Exception(const std::string &what_arg) :
+    explicit big_uint_exception(const std::string &what_arg) :
         std::runtime_error(what_arg)
     {
     }
 
-    explicit uint128Exception(const char *what_arg) :
+    explicit big_uint_exception(const char *what_arg) :
         std::runtime_error(what_arg)
     {
     }
 };
 
-class uint128
+class big_uint
 {
 public:
     enum Representation
@@ -33,28 +32,26 @@ public:
         dec
     };
 
-    uint128()
-    {
-        InitDigits();
-    }
-
-    uint128(const std::uint64_t val_in)
+    big_uint(const std::uint64_t val_in=0,
+             const std::uint32_t num_bits=128)
     {
         // Put in lower bits
-        InitDigits();
+        InitDigits(num_bits);
         SetValue(val_in, 64, 64);
     }
 
-    uint128(const std::string str_in, const Representation rep)
+    big_uint(const std::string str_in,
+             const Representation rep,
+             const std::uint32_t num_bits=128)
     {
-        InitDigits();
+        InitDigits(num_bits);
 
         FromString(str_in, rep);
     }
 
-    uint128& operator=(const std::uint64_t val_in)
+    big_uint& operator=(const std::uint64_t val_in)
     {
-        InitDigits();
+        InitDigits(128);
         this->SetValue(val_in, 64, 64);
         return *this;
     }
@@ -64,9 +61,10 @@ public:
                   const std::uint16_t msb_offset)
     {
         if (num_bits > BIT_64)
-            throw uint128Exception("Error. Max num bits is 64");
-        if (msb_offset > MAX_SIZE - 1)
-            throw uint128Exception("Error. msb offset is out of range. Max 127");
+            throw big_uint_exception("Error. Max num bits is 64");
+        if (msb_offset > digits.size() - 1)
+            throw big_uint_exception("Error. msb offset is out of range. Max " +
+                std::to_string(digits.size() - 1));
 
         const std::uint64_t bit_mask = 0x8000000000000000;
 
@@ -75,7 +73,7 @@ public:
 
         std::int32_t idx = msb_offset;
         std::uint16_t iter = 0;
-        while (iter < num_bits && idx < MAX_SIZE)
+        while (iter < num_bits && idx < 128)
         {
             digits[idx++] = ((value & bit_mask) == bit_mask);
             value = value << 1;
@@ -83,16 +81,16 @@ public:
         }
     }
 
-    void SetValue(const uint128& value,
+    void SetValue(const big_uint& value,
                   const std::uint16_t num_bits,
                   const std::uint16_t msb_offset)
     {
-        if (msb_offset > MAX_SIZE - 1)
-            throw uint128Exception("Error. msb offset is out of range. "
+        if (msb_offset > digits.size() - 1)
+            throw big_uint_exception("Error. msb offset is out of range. "
                 "Max 127.");
 
-        if (msb_offset + num_bits > MAX_SIZE - 1)
-            throw uint128Exception("Error. Copied data is larger than "
+        if (msb_offset + num_bits > digits.size() - 1)
+            throw big_uint_exception("Error. Copied data is larger than "
                 "Max size of 127.");
 
         std::uint16_t to_idx = msb_offset;
@@ -110,14 +108,14 @@ public:
                            const std::uint16_t msb_offset) const
     {
         if (num_bits > BIT_64)
-            throw uint128Exception("Max num bits is 64");
-        if (msb_offset > MAX_SIZE - 1)
-            throw uint128Exception("msb_offset is out of range. Max 127");
+            throw big_uint_exception("Max num bits is 64");
+        if (msb_offset > 128 - 1)
+            throw big_uint_exception("msb_offset is out of range. Max 127");
 
         std::uint64_t val = 0;
         std::uint64_t idx = msb_offset;
         std::uint64_t iter = 0;
-        while (iter < num_bits && idx < MAX_SIZE)
+        while (iter < num_bits && idx < 128)
         {
             val = val << 1;
             val += digits[idx++];
@@ -144,7 +142,7 @@ public:
                 FromDecimalString(str_in);
                 break;
             default:
-                throw uint128Exception("Error. Given representation is not "
+                throw big_uint_exception("Error. Given representation is not "
                 "recognized");
         }
     }
@@ -152,7 +150,7 @@ public:
     void FromString(std::string str_in)
     {
         if (str_in.length() < 3)
-            throw uint128Exception("Error. The length of the input string must"
+            throw big_uint_exception("Error. The length of the input string must"
             " contain a number system symbol and values. With a min length of 3"
             ". ex. 0xFA231");
 
@@ -171,14 +169,14 @@ public:
         else if (strcmp(sym, "0d") == 0)
             FromDecimalString(str_in);
         else
-            throw uint128Exception("Error. No number symbol format given."
+            throw big_uint_exception("Error. No number symbol format given."
             " ex. 0x132 | 0b1101 | 0d1023");
     }
 
     void FromHexString(std::string hex_in)
     {
         if (hex_in.length() * 4 > digits.size())
-            throw uint128Exception("Error. Hex string contains more significant"
+            throw big_uint_exception("Error. Hex string contains more significant"
                 " digits than the size of the digit array");
 
         Clear();
@@ -198,7 +196,7 @@ public:
             else if (hex_ch >= 'A' && hex_ch <= 'F')
                 hex_ch -= 55;
             else
-                throw uint128Exception(std::string("Error. Letter ") + hex_ch +
+                throw big_uint_exception(std::string("Error. Letter ") + hex_ch +
                     std::string(" is not a hexadecimal value."));
 
             // Convert 0-15 to bin
@@ -219,7 +217,7 @@ public:
     void FromBinaryString(std::string bin_in)
     {
         if (bin_in.length() > digits.size())
-            throw uint128Exception("Error. Binary string contains more "
+            throw big_uint_exception("Error. Binary string contains more "
             "significant digits than the size of the digit array.");
 
         Clear();
@@ -288,8 +286,9 @@ public:
         }
 
         if (tmp_bin.length() > digits.size())
-            throw uint128Exception("Error. The value of the given string"
-                                   " is larger than 128 bits");
+            throw big_uint_exception("Error. The value of the given string"
+                                   " is larger than set size of " +
+                                   std::to_string(digits.size()) + " bits");
 
         // Copy it into the digits.
         std::int64_t digit_idx = digits.size() - 1;
@@ -314,7 +313,7 @@ public:
             case dec:
                 return ToDecimalString(delimiter);
             default:
-                throw uint128Exception("Error. Given representation is not "
+                throw big_uint_exception("Error. Given representation is not "
                 "recognized");
         }
 
@@ -429,7 +428,7 @@ public:
 
     std::uint16_t last()
     {
-        return MAX_SIZE - 1;
+        return 128 - 1;
     }
 
     void Clear()
@@ -445,7 +444,7 @@ public:
         return digits;
     }
 
-    const bool operator>(const uint128& other) const
+    const bool operator>(const big_uint& other) const
     {
         const std::vector<uint8_t> other_digits = other.Data();
         for (std::uint32_t i = 0; i < digits.size(); i++)
@@ -462,7 +461,7 @@ public:
     std::uint8_t& operator[](const std::uint16_t idx)
     {
         if (idx > digits.size())
-            throw uint128Exception("Error. Index out of range");
+            throw big_uint_exception("Error. Index out of range");
 
         return digits[idx];
     }
@@ -470,14 +469,22 @@ public:
     const std::uint8_t at(const std::uint16_t idx) const
     {
         if (idx > digits.size())
-            throw uint128Exception("Error. Index out of range");
+            throw big_uint_exception("Error. Index out of range");
 
         return digits[idx];
     }
 
-    static uint128 BitValue(std::uint32_t bits)
+    std::uint64_t value()
     {
-        uint128 val;
+        if (digits.size() > 64)
+            return 0;
+
+        return GetValue(digits.size(), 0);
+    }
+
+    static big_uint BitValue(std::uint32_t bits)
+    {
+        big_uint val;
 
         std::uint64_t i = val.digits.size() - 1;
         while (bits-- > 0)
@@ -525,9 +532,12 @@ private:
         return sig_figs;
     }
 
-    void InitDigits()
+    void InitDigits(std::uint32_t num_bits)
     {
-        for (std::uint32_t i = 0; i < MAX_SIZE; i++)
+        if (digits.size() > 0)
+            digits.clear();
+
+        for (std::uint32_t i = 0; i < 128; i++)
         {
             digits.push_back(0);
         }

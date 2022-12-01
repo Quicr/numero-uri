@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "UrlEncoder.hh"
-#include "uint128.hh"
+#include "big_uint.hh"
 #include "nlohmann/json.hpp"
 using json = nlohmann::json;
 
@@ -28,7 +28,7 @@ namespace
     {
         std::string url = "https://webex.com/11259375/meeting1234/user3213";
 
-        uint128 encoded = encoder.EncodeUrl(url);
+        big_uint encoded = encoder.EncodeUrl(url);
         std::string res = encoded.ToDecimalString();
         std::string actual = "1237981375469430707200000000000000000000";
         ASSERT_EQ(res, actual);
@@ -38,7 +38,7 @@ namespace
     {
         std::string url = "https://www.webex.com/16777215/party31/building7/floor549755813887/room33554431/meeting4294967295";
 
-        uint128 encoded = encoder.EncodeUrl(url);
+        big_uint encoded = encoder.EncodeUrl(url);
         std::string res = encoded.ToDecimalString();
         std::string actual = "1844674407370955161518446744073709551615";
         ASSERT_EQ(res, actual);
@@ -48,7 +48,7 @@ namespace
     {
         EXPECT_THROW({
             std::string url = "https://webex.com/11259375/meeting65536/user3213";
-            uint128 encoded = encoder.EncodeUrl(url);
+            big_uint encoded = encoder.EncodeUrl(url);
         }, UrlEncoderOutOfRangeException);
     }
 
@@ -56,7 +56,7 @@ namespace
     {
         EXPECT_THROW({
             std::string url = "https://webex.com/123/12312/3232/meeting2132/user3213";
-            uint128 encoded = encoder.EncodeUrl(url);
+            big_uint encoded = encoder.EncodeUrl(url);
         }, UrlEncoderNoMatchException);
     }
 
@@ -74,7 +74,7 @@ namespace
             encoder.AddTemplate("https://webex.com/<int24=2>/meeting<int16>/user<int16>");
             std::string url = "https://webex.com/2/meeting1234/user3213";
 
-            uint128 encoded = encoder.EncodeUrl(url);
+            big_uint encoded = encoder.EncodeUrl(url);
             std::string res = encoded.ToDecimalString();
 
             encoder.RemoveTemplate(2);

@@ -20,7 +20,7 @@
 #include <regex>
 #include <stdexcept>
 
-#include "uint128.hh"
+#include "big_uint.hh"
 
 #include "nlohmann/json.hpp"
 // Just because writing nlohmann is hard.
@@ -109,18 +109,24 @@ class UrlEncoder
 public:
     // Structure to describe a url template
     typedef struct {
+        std::int16_t sub_pen;
         std::string url;
         std::vector<std::uint32_t> bits;
     } url_template;
 
+    typedef std::vector<url_template> v_template;
+
     // Alias for url templates
-    typedef std::map<std::uint64_t, url_template> template_list;
+    typedef std::map<std::uint64_t, v_template> template_list;
+
+    const std::uint16_t Pen_Bits = 24;
+    const std::uint16_t Sub_Pen_Bits = 8;
 
     /*
     *  UrlEncoder::EncodeUrl
     *
     *  Description:
-    *      Receives a url and encodes it into a uint128 object. The url that is
+    *      Receives a url and encodes it into a big_uint object. The url that is
     *      given will be matched against a set of urls that are saved in memory.
     *
     *  Parameters:
@@ -128,18 +134,18 @@ public:
     *          The url to be encoded
     *
     *  Returns:
-    *      uint128 - Contains the encoding
+    *      big_uint - Contains the encoding
     *
     *  Comments:
     *      Note: To add a new template see UrlEncoder::AddTemplate
     */
-    uint128 EncodeUrl(const std::string &url);
+    big_uint EncodeUrl(const std::string &url);
 
     /*
     *  UrlEncoder::DecodeUrl
     *
     *  Description:
-    *      Receives a encoding in string format converts it into a uint128 and
+    *      Receives a encoding in string format converts it into a big_uint and
     *      passes it to a overloaded UrlEncoder::DecoderUrl. The representation of
     *      the string matters if there is not a format given in the string.
     *      ex. Hexadecimal - 0xF123 | Binary - 0b0101 | Decimal - 0d1232
@@ -149,7 +155,7 @@ public:
     *          A string of an encoded url
     *      rep [in]
     *          The number format representation that the string is
-    *          - Default = uint128::Representation::sym - implies the number
+    *          - Default = big_uint::Representation::sym - implies the number
     *              format is contained in the string
     *  Returns:
     *      std::string - A decoded url string
@@ -157,18 +163,18 @@ public:
     *  Comments:
     *      Note: rep can be sym, hex, dec, bin.
     */
-    std::string DecodeUrl(const uint128& code);
+    std::string DecodeUrl(const big_uint& code);
 
     /*
     *  UrlEncoder::DecodeUrl
     *
     *  Description:
-    *      Receives a uint128 encoding and attempts to decode and build a url based
+    *      Receives a big_uint encoding and attempts to decode and build a url based
     *      on its values from the templates that are loaded into memory.
     *
     *  Parameters:
-    *      uint128 [in]
-    *          An encoded uint128 object.
+    *      big_uint [in]
+    *          An encoded big_uint object.
     *
     *  Returns:
     *      std::string - A decoded url string
@@ -176,7 +182,7 @@ public:
     *  Comments:
     */
     std::string DecodeUrl(const std::string &code_str,
-        const uint128::Representation rep=uint128::Representation::sym);
+        const big_uint::Representation rep=big_uint::Representation::sym);
 
     /*
     *  UrlEncoder::AddTemplate
@@ -202,6 +208,39 @@ public:
     *  Comments:
     */
     void AddTemplate(const std::string& new_template);
+
+    /*
+    *  UrlEncoder::AddTemplate
+    *
+    *  Description:
+    *      Adds a vectors of templates to memory
+    *
+    *  Parameters:
+    *      new_templates [in]
+    *          A vector of strings of templates
+    *
+    *  Returns:
+    *
+    *  Comments:
+    */
+    void AddTemplate(const std::vector<std::string>& new_templates);
+
+
+    /*
+    *  UrlEncoder::AddTemplate
+    *
+    *  Description:
+    *      Adds a array of templates to memory
+    *
+    *  Parameters:
+    *      new_templates [in]
+    *          An array of strings of templates
+    *
+    *  Returns:
+    *
+    *  Comments:
+    */
+    void AddTemplate(const std::string* new_templates, size_t count);
 
     /*
     *  UrlEncoder::RemoveTemplate
@@ -284,18 +323,18 @@ public:
     *  UrlEncoder::GetTemplate
     *
     *  Description:
-    *      Gets the template with the id of pen
+    *      Gets the templates for the id of PEN
     *
     *  Parameters:
     *      pen [in]
     *          The PEN number key for a template
     *
     *  Returns:
-    *      UrlEncoder::url_template - The url template object that was retrieved
+    *      UrlEncoder::templates - The url templates vector that was retrieved
     *
     *  Comments:
     */
-    const url_template& GetTemplate(std::uint64_t pen) const;
+    const v_template& GetTemplate(std::uint64_t pen) const;
 private:
     template_list templates;
 };
