@@ -169,8 +169,9 @@ public:
     *  UrlEncoder::DecodeUrl
     *
     *  Description:
-    *      Receives a big_uint encoding and attempts to decode and build a url based
-    *      on its values from the templates that are loaded into memory.
+    *      Receives a big_uint encoding and attempts to decode and build a
+    *       url based on its values from the templates that are loaded into
+    *       memory.
     *
     *  Parameters:
     *      big_uint [in]
@@ -253,12 +254,31 @@ public:
     *          The PEN number key for a template
     *
     *  Returns:
-    *      bool - If the PEN number is found in the templates and it a template is
-    *          deleted.
+    *      bool - If the PEN number is found in the templates and it a
+    *       template is deleted.
     *
     *  Comments:
     */
-    bool RemoveTemplate(const std::uint64_t key);
+    bool RemoveTemplate(const std::uint64_t pen);
+
+    /*
+    *  UrlEncoder::RemoveSubTemplate
+    *
+    *  Description:
+    *      Removes a sub template from memory. If there are no sub templates
+    *       remaining then the PEN template will be removed.
+    *
+    *  Parameters:
+    *       pen [in]
+    *          The PEN number key for a template
+    *
+    *  Returns:
+    *      bool - If the Sub-PEN number is found in the templates and a
+    *       template is deleted then true is returned
+    *
+    *  Comments:
+    */
+    bool RemoveSubTemplate(const std::uint32_t pen, const std::uint8_t sub_pen);
 
     /*
     *  UrlEncoder::TemplatesToJson

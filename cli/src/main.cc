@@ -66,7 +66,8 @@ int main(int argc, char** argv)
                 throw UrlEncoderException("Failed to remove template from list");
 
             // Save the template file
-            // encoder.SaveTemplates(template_file);
+            TemplateFileManager::SaveTemplates(template_file,
+                                               encoder.TemplatesToJson());
             std::cout << "Template with PEN " << pen << " has been removed.\n";
         }
         else

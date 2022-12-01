@@ -537,7 +537,7 @@ private:
         if (digits.size() > 0)
             digits.clear();
 
-        for (std::uint32_t i = 0; i < 128; i++)
+        for (std::uint32_t i = 0; i < num_bits; i++)
         {
             digits.push_back(0);
         }
