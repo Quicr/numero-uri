@@ -78,10 +78,10 @@ To build the tests and run them
 ### Local - Linux
 - Add a template
 
-    ```./build/bin/numero_uri add-template https://webex.com<int24=123>/meeting<int16>/room<int16>```
+    ```./build/bin/numero_uri add-template 'https://webex.com<int24=123>/meeting<int16> room<int16>'```
 - Encode a template
 
-    ```./build/bin/numero_uri encode https://webex.com/meeting2/room56```
+    ```./build/bin/numero_uri encode 'https://webex.com/meeting2/room56'```
 
 - Decode a number string
 
@@ -93,7 +93,7 @@ To build the tests and run them
 
 - Select a template file
 
-    ```./build/bin/numero_uri config template-file C:/my_files/path/to/template/templates.json```
+    ```./build/bin/numero_uri config template-file /path/to/template/templates.json```
 
 ---
 ## Tests

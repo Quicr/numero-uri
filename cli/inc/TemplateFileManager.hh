@@ -17,7 +17,6 @@ namespace TemplateFileManager
                        const json &templates)
     {
         std::ofstream file(filename);
-        file << std::setw(4) << templates << std::endl;
         file.close();
 
         return true;

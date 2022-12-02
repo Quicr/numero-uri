@@ -1,35 +1,37 @@
 [
     {
-        "bits": [
-            24,
-            16,
-            16
-        ],
         "pen": 1,
-        "url": "^https://webex.com/(\\d+)/meeting(\\d+)/user(\\d+)$",
-        "templates": {
-
-        }
+        "templates": [
+            {
+                "bits": [
+                    13
+                ],
+                "sub_pen": 0,
+                "url": "^https://webex.com/hello(\\d+)$"
+            },
+            {
+                "bits": [
+                    34,
+                    65,
+                    32
+                ],
+                "sub_pen": 1,
+                "url": "^https://webex.com/hello(\\d+)/world(\\d+)/(\\d+)$"
+            }
+        ]
     },
     {
-        "bits": [
-            24,
-            16,
-            16
-        ],
-        "pen": 11259375,
-        "url": "^https://(?:www\\.)?webex.com/(\\d+)/meeting(\\d+)/user(\\d+)$"
-    },
-    {
-        "bits": [
-            24,
-            5,
-            3,
-            39,
-            25,
-            32
-        ],
         "pen": 16777215,
-        "url": "^https://(?:www\\.)?webex.com/(\\d+)/party(\\d+)/building(\\d+)/floor(\\d+)/room(\\d+)/meeting(\\d+)$"
+        "templates": [
+            {
+                "bits": [
+                    32,
+                    32,
+                    32
+                ],
+                "sub_pen": -1,
+                "url": "^https://webex.com/my(\\d+)/name(\\d+)/is(\\d+)$"
+            }
+        ]
     }
 ]

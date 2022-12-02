@@ -129,29 +129,25 @@ std::string UrlEncoder::DecodeUrl(const big_uint &code)
 
     // Search for this sub PEN
     bool found_sub_pen = false;
-    for (auto url_temp : temp_map)
+
+    // TODO use find instead, search for a -1
+    // search for the sub pen
+    if (temp_map.find(-1) != temp_map.end())
     {
-        // If there is a sub PEN with -1 then sub PENs are not being used
-        if (url_temp.first == -1)
-        {
-            temp = url_temp.second;
-            found_sub_pen = true;
-            break;
-        }
-
-        if (url_temp.first != sub_pen) continue;
-
-        temp = url_temp.second;
-        pen_sub_bits = Sub_Pen_Bits;
-        found_sub_pen = true;
+        temp = temp_map.at(-1);
     }
-
-    // No sub PEN was found for this PEN so throw an error.
-    if (!found_sub_pen)
+    else if (temp_map.find(sub_pen) != temp_map.end())
+    {
+        temp = temp_map.at(sub_pen);
+        pen_sub_bits = Sub_Pen_Bits;
+    }
+    else
+    {
+        // No sub PEN was found for this PEN so throw an error.
         throw UrlDecodeNoMatchException("Error. No templates matches the "
             "found PEN " + std::to_string(pen) + " and sub PEN " +
             std::to_string(sub_pen));
-
+    }
 
     // Get the regex
     std::string reg = temp.url;
@@ -300,11 +296,22 @@ void UrlEncoder::AddTemplate(const std::string& new_template)
         // Check if a sub PEN was provided
         start = new_template.find('<', end) + 1;
         end = new_template.find('>', start);
+        auto temp_map = templates[pen_value->value()];
         std::string sub_pen_str = new_template.substr(start, end-start);
-        if (!std::regex_match(sub_pen_str, matches, sub_pen_regex))
+        if (!std::regex_match(sub_pen_str, matches, sub_pen_regex) &&
+            temp_map.find(-1) == temp_map.end())
+        {
+            // If there are sub PENs for this PEN and one is not provided
             throw UrlEncoderException("Error. PEN key " +
                 pen_value->ToDecimalString() + " exists but no sub-pen was "
                 "provided.");
+        }
+        else if (temp_map.find(-1) != temp_map.end())
+        {
+            // If there are not sub PENs for this PEN
+            throw UrlEncoderException("Error. Sub PENs are not used for PEN"
+                " " + pen_value->ToDecimalString());
+        }
 
         // Attempt to put the value into the int with a max size of 8 bits
         // Throws an error if it goes over the limit
@@ -313,15 +320,10 @@ void UrlEncoder::AddTemplate(const std::string& new_template)
                          8);
 
         // Check if this PEN template has a sub PEN of the same key
-        auto temp_map = templates[pen_value->value()];
-        for (auto url_temp : temp_map)
+        if (temp_map.find(sub_pen.value()) != temp_map.end())
         {
-            if (url_temp.first == -1)
-                throw UrlEncoderException("Error. Sub PENs are not used for PEN"
-                    " " + pen_value->ToDecimalString());
-            if (url_temp.first == sub_pen.value())
-                throw UrlEncoderException("Error. Sub PEN key already exists "
-                    + std::to_string(url_temp.first));
+            throw UrlEncoderException("Error. Sub PEN key already exists "
+                + sub_pen.ToDecimalString());
         }
 
         temp.first = sub_pen.value();

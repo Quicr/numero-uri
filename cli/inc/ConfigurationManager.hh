@@ -22,12 +22,11 @@ namespace ConfigurationManager
         const size_t len = FILENAME_MAX;
         std::int64_t bytes;
         char slash;
+        char buf[len];
         #ifdef _WIN32
-            wchar_t buf[len];
             bytes = GetModuleFileName(NULL, buf, len);
             slash = '\\';
         #else
-            char buf[len];
             bytes = readlink("/proc/self/exe", buf, len);
             bytes = (bytes > 0) ? bytes : 0;
             slash = '/';
@@ -54,7 +53,7 @@ namespace ConfigurationManager
 
     std::string InitConfig()
     {
-        std::string config_filepath = PathToExecutable() + "config.json";
+        std::string config_filepath = PathToExecutable() + "/config.json";
 
         std::fstream config_file;
 

@@ -38,17 +38,14 @@ int main(int argc, char** argv)
             std::string decoded = encoder.DecodeUrl(argv[2]);
             std::cout << decoded << "\n";
         }
-        else if (strcmp(argv[1], "config") == 0)
+        else if (strcmp(argv[1], "template-file") == 0)
         {
-            ConfigurationManager::UpdateConfigFile(argv[2], argv[3]);
-            if (strcmp(argv[2], "template-file") == 0)
-            {
-                std::string f_path = ConfigurationManager::GetTemplateFilePath();
-                encoder.Clear();
-                json data = TemplateFileManager::LoadTemplatesFromFile(f_path);
-                encoder.TemplatesFromJson(data);
-                std::cout << "Updated template file location\n";
-            }
+            ConfigurationManager::UpdateConfigFile(argv[1], argv[2]);
+            std::string f_path = ConfigurationManager::GetTemplateFilePath();
+            // encoder.Clear();
+            // json data = TemplateFileManager::LoadTemplatesFromFile(f_path);
+            // encoder.TemplatesFromJson(data);
+            std::cout << "Updated template file location\n";
         }
         else if (strcmp(argv[1], "add-template") == 0)
         {
@@ -69,6 +66,10 @@ int main(int argc, char** argv)
             TemplateFileManager::SaveTemplates(template_file,
                                                encoder.TemplatesToJson());
             std::cout << "Template with PEN " << pen << " has been removed.\n";
+        }
+        else if (strcmp(argv[1], "show-templates") == 0)
+        {
+            std::cout << std::setw(4) << encoder.TemplatesToJson() << std::endl;
         }
         else
         {
