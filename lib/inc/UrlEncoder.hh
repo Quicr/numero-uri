@@ -109,15 +109,14 @@ class UrlEncoder
 public:
     // Structure to describe a url template
     typedef struct {
-        std::int16_t sub_pen;
         std::string url;
         std::vector<std::uint32_t> bits;
     } url_template;
 
-    typedef std::vector<url_template> v_template;
+    typedef std::map<std::int16_t, url_template> template_map;
 
     // Alias for url templates
-    typedef std::map<std::uint64_t, v_template> template_list;
+    typedef std::map<std::uint64_t, template_map> pen_template_map;
 
     const std::uint16_t Pen_Bits = 24;
     const std::uint16_t Sub_Pen_Bits = 8;
@@ -337,7 +336,7 @@ public:
     *
     *  Comments:
     */
-    const template_list& GetTemplates() const;
+    const pen_template_map& GetTemplates() const;
 
     /*
     *  UrlEncoder::GetTemplate
@@ -354,7 +353,7 @@ public:
     *
     *  Comments:
     */
-    const v_template& GetTemplate(std::uint64_t pen) const;
+    const template_map& GetTemplate(std::uint64_t pen) const;
 private:
-    template_list templates;
+    pen_template_map templates;
 };

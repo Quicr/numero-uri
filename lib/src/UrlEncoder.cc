@@ -12,21 +12,21 @@ big_uint UrlEncoder::EncodeUrl(const std::string &url)
     std::int16_t sub_pen;
     UrlEncoder::url_template selected_template;
     bool found_template = false;
-    for (auto pen_temp : templates)
+    for (auto temp_map : templates)
     {
         // Find match
-        for (size_t i = 0; i < pen_temp.second.size(); i++)
+        for (auto url_temp : temp_map.second)
         {
             // Set the selected templated to whatever we are looking at
-            selected_template = pen_temp.second[i];
+            selected_template = url_temp.second;
 
             // Check if this template matches our url
             if (!std::regex_match(url, std::regex(selected_template.url)))
                 continue;
 
             // Set the PEN to the matched template PEN
-            pen = pen_temp.first;
-            sub_pen = selected_template.sub_pen;
+            pen = temp_map.first;
+            sub_pen = url_temp.first;
             found_template = true;
             break;
         }
@@ -121,7 +121,7 @@ std::string UrlEncoder::DecodeUrl(const big_uint &code)
             "Error. No templates matches the found PEN " + std::to_string(pen));
 
     // Get the template for that PEN
-    auto pen_templates = templates.at(pen);
+    auto temp_map = templates.at(pen);
     UrlEncoder::url_template temp;
 
     // Get the sub PEN value from the big_uint offset by the PEN bits
@@ -129,19 +129,19 @@ std::string UrlEncoder::DecodeUrl(const big_uint &code)
 
     // Search for this sub PEN
     bool found_sub_pen = false;
-    for (auto pen_temp : pen_templates)
+    for (auto url_temp : temp_map)
     {
         // If there is a sub PEN with -1 then sub PENs are not being used
-        if (pen_temp.sub_pen == -1)
+        if (url_temp.first == -1)
         {
-            temp = pen_temp;
+            temp = url_temp.second;
             found_sub_pen = true;
             break;
         }
 
-        if (pen_temp.sub_pen != sub_pen) continue;
+        if (url_temp.first != sub_pen) continue;
 
-        temp = pen_temp;
+        temp = url_temp.second;
         pen_sub_bits = Sub_Pen_Bits;
         found_sub_pen = true;
     }
@@ -254,17 +254,17 @@ void UrlEncoder::AddTemplate(const std::string& new_template)
     std::smatch matches;
 
     // Template variable
-    url_template temp;
+    std::pair<std::int16_t, url_template> temp;
 
     // Find the first angle bracket
     std::size_t start = new_template.find('<') + 1;
     std::size_t end = 0;
 
     // Start the regex match string
-    temp.url = '^';
+    temp.second.url = '^';
 
     // Put everything up to the first option into the regex
-    temp.url += new_template.substr(0, start-1);
+    temp.second.url += new_template.substr(0, start-1);
 
     // Get the pen from the string
     end = new_template.find('>', start);
@@ -313,22 +313,22 @@ void UrlEncoder::AddTemplate(const std::string& new_template)
                          8);
 
         // Check if this PEN template has a sub PEN of the same key
-        auto temps = templates[pen_value->value()];
-        for (auto t : temps)
+        auto temp_map = templates[pen_value->value()];
+        for (auto url_temp : temp_map)
         {
-            if (t.sub_pen == -1)
+            if (url_temp.first == -1)
                 throw UrlEncoderException("Error. Sub PENs are not used for PEN"
                     " " + pen_value->ToDecimalString());
-            if (t.sub_pen == sub_pen.value())
+            if (url_temp.first == sub_pen.value())
                 throw UrlEncoderException("Error. Sub PEN key already exists "
-                    + std::to_string(t.sub_pen));
+                    + std::to_string(url_temp.first));
         }
 
-        temp.sub_pen = sub_pen.value();
+        temp.first = sub_pen.value();
     }
     else
     {
-        temp.sub_pen = -1;
+        temp.first = -1;
     }
 
     // Start from the end of the PEN group
@@ -358,22 +358,22 @@ void UrlEncoder::AddTemplate(const std::string& new_template)
             }
 
             // Get the bits from the match
-            temp.bits.push_back(std::stoul(matches[1].str()));
+            temp.second.bits.push_back(std::stoul(matches[1].str()));
             start = end + 1;
 
             // Push regex onto the string
-            temp.url += ("(\\d+)");
+            temp.second.url += ("(\\d+)");
             continue;
         }
 
-        temp.url += ch;
+        temp.second.url += ch;
     }
 
     // Close the entire string
-    temp.url += '$';
+    temp.second.url += '$';
 
     // Extract and replace optional chunks
-    std::regex_search(temp.url, matches, optional_regex);
+    std::regex_search(temp.second.url, matches, optional_regex);
     std::string optional_str;
     size_t search_idx = 1;
     size_t optional_idx;
@@ -382,7 +382,7 @@ void UrlEncoder::AddTemplate(const std::string& new_template)
     while (search_idx < matches.size())
     {
         optional_str = matches[search_idx++].str();
-        optional_idx = temp.url.find("!{" + optional_str + "}!");
+        optional_idx = temp.second.url.find("!{" + optional_str + "}!");
         optional_sz = optional_str.size() + 4;
 
         // This could be a problem if there are a lot of wild cards..
@@ -393,11 +393,11 @@ void UrlEncoder::AddTemplate(const std::string& new_template)
 
         // Replace the optional chunk !{...}!
         if (optional_idx != std::string::npos)
-            temp.url.replace(optional_idx, optional_sz, "(?:" + optional_str + ")?");
+            temp.second.url.replace(optional_idx, optional_sz, "(?:" + optional_str + ")?");
     }
 
 
-    templates[pen_value->value()].push_back(temp);
+    templates[pen_value->value()].emplace(temp);
 }
 
 void UrlEncoder::AddTemplate(const std::vector<std::string>& new_templates)
@@ -430,50 +430,46 @@ bool UrlEncoder::RemoveSubTemplate(const std::uint32_t pen,
     if (templates.find(pen) == templates.end())
         return false;
 
-    auto temps = templates[pen];
+    auto temp_map = templates[pen];
 
-    std::uint8_t idx = 0;
-    for (auto sub_temps : temps)
-    {
-        if (sub_temps.sub_pen == sub_pen)
-        {
-            temps.erase(temps.begin() + idx);
-            break;
-        }
-        idx++;
-    }
+    if (temp_map.find(sub_pen) == temp_map.end())
+        return false;
+
+    temp_map.erase(sub_pen);
+
+    return true;
 }
 
 json UrlEncoder::TemplatesToJson() const
 {
     // Create the template string
     json j;
-    json j_temp;
+    json j_pen_list;
     json j_bits;
-    json j_sub_temp;
-    for (auto pen_temp : templates)
+    json j_temp_map;
+    for (auto temp_map : templates)
     {
-        j_temp.clear();
-        j_temp["pen"] = pen_temp.first;
+        j_pen_list.clear();
+        j_pen_list["pen"] = temp_map.first;
 
-        for (auto temp : pen_temp.second)
+        for (auto url_temp : temp_map.second)
         {
-            j_sub_temp.clear();
+            j_temp_map.clear();
 
-            j_sub_temp["url"] = temp.url;
+            j_temp_map["url"] = url_temp.second.url;
 
-            j_sub_temp["sub_pen"] = temp.sub_pen;
+            j_temp_map["sub_pen"] = url_temp.first;
 
             // Fill in the bits array
             j_bits.clear();
-            for (auto bit : temp.bits)
+            for (auto bit : url_temp.second.bits)
                 j_bits.push_back(bit);
-            j_sub_temp["bits"] = j_bits;
+            j_temp_map["bits"] = j_bits;
 
-            j_temp["templates"].push_back(j_sub_temp);
+            j_pen_list["templates"].push_back(j_temp_map);
         }
 
-        j.push_back(j_temp);
+        j.push_back(j_pen_list);
     }
 
     return j;
@@ -481,7 +477,7 @@ json UrlEncoder::TemplatesToJson() const
 
 void UrlEncoder::TemplatesFromJson(const json& data)
 {
-    v_template temps;
+    template_map temps;
     for (unsigned int i = 0; i < data.size(); i++)
     {
         for (unsigned int j = 0; j < data[i]["templates"].size(); j++)
@@ -491,14 +487,14 @@ void UrlEncoder::TemplatesFromJson(const json& data)
             url_temp.url = data[i]["templates"][j]["url"];
 
             // Get the sub pen
-            url_temp.sub_pen = data[i]["templates"][j]["sub_pen"];
+            // url_temp.first = data[i]["templates"][j]["sub_pen"];
 
             // Get the bits
             url_temp.bits.clear();
             for (auto& element : data[i]["templates"][j]["bits"])
                 url_temp.bits.push_back(static_cast<std::uint32_t>(element));
 
-            temps.push_back(url_temp);
+            temps[data[i]["templates"][j]["sub_pen"]] = url_temp;
         }
 
         // Push the values onto the templates list
@@ -512,12 +508,12 @@ void UrlEncoder::Clear()
     templates.clear();
 }
 
-const UrlEncoder::template_list& UrlEncoder::GetTemplates() const
+const UrlEncoder::pen_template_map& UrlEncoder::GetTemplates() const
 {
     return templates;
 }
 
-const UrlEncoder::v_template&
+const UrlEncoder::template_map&
     UrlEncoder::GetTemplate(std::uint64_t pen) const
 {
     return templates.at(pen);
