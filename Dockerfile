@@ -3,7 +3,8 @@ LABEL description="Build and Test Webex Http Encoder"
 
 # Build tools
 RUN apk add build-base
-RUN apk add libressl-dev
+RUN apk add curl-dev
+# RUN apk add libressl-dev
 RUN apk add gtest-dev
 RUN apk add git
 RUN apk add cmake

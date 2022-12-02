@@ -207,7 +207,8 @@ public:
     *
     *  Comments:
     */
-    void AddTemplate(const std::string& new_template);
+    void AddTemplate(const std::string& new_template,
+                     const bool overwrite=false);
 
     /*
     *  UrlEncoder::AddTemplate
@@ -223,7 +224,8 @@ public:
     *
     *  Comments:
     */
-    void AddTemplate(const std::vector<std::string>& new_templates);
+    void AddTemplate(const std::vector<std::string>& new_templates,
+                     const bool overwrite=false);
 
 
     /*
@@ -235,12 +237,39 @@ public:
     *  Parameters:
     *      new_templates [in]
     *          An array of strings of templates
+    *      count [in]
+    *          Number of new_templates in the string array
+    *      Overwrite [in]
+    *          Overwrite flag will cause overwriting of existing PEN
+    *          otherwise they will be skipped
     *
     *  Returns:
     *
     *  Comments:
     */
-    void AddTemplate(const std::string* new_templates, size_t count);
+    void AddTemplate(const std::string* new_templates,
+                     const size_t count,
+                     const bool overwrite=false);
+
+
+    /*
+    *  UrlEncoder::AddTemplate
+    *
+    *  Description:
+    *      Adds templates from a json object
+    *
+    *  Parameters:
+    *      new_templates [in]
+    *          A json object with >=1 templates
+    *      Overwrite [in]
+    *          Overwrite flag will cause overwriting of existing PEN
+    *          otherwise they will be skipped
+    *
+    *  Returns:
+    *
+    *  Comments:
+    */
+    void AddTemplate(const json& new_templates, const bool overwrite=false);
 
     /*
     *  UrlEncoder::RemoveTemplate
@@ -307,6 +336,8 @@ public:
     *  Returns:
     *
     *  Comments:
+    *      Note- This will clear current templates, if you want to append use
+    *            add_templates(json obj) function.
     */
     void TemplatesFromJson(const json& data);
 
@@ -354,6 +385,23 @@ public:
     *  Comments:
     */
     const template_map& GetTemplate(std::uint64_t pen) const;
+
 private:
+    /*
+    *  UrlEncoder::PraseJson
+    *
+    *  Description:
+    *      Parses json and returns a pen_template_map
+    *
+    *  Parameters:
+    *      data [in]
+    *          json object to be parsed
+    *
+    *  Returns:
+    *      UrlEncoder::pen_template_map - A map of PEN templates
+    *
+    *  Comments:
+    */
+    pen_template_map ParseJson(const json& data) const;
     pen_template_map templates;
 };

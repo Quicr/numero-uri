@@ -231,7 +231,8 @@ std::string UrlEncoder::DecodeUrl(const big_uint &code)
     return decoded;
 }
 
-void UrlEncoder::AddTemplate(const std::string& new_template)
+void UrlEncoder::AddTemplate(const std::string& new_template,
+                             const bool overwrite)
 {
     // The first value must be filled in with their PEN
     const std::string example =
@@ -289,6 +290,10 @@ void UrlEncoder::AddTemplate(const std::string& new_template)
             " PEN value found = " + matches[1].str() + " " + ex.what());
     }
 
+    if (overwrite)
+        templates.erase(pen_value->value());
+
+    // FIX, this doesn't allow someone to add a sub-pen and pen at the same time.
     // Do some error checking
     if (templates.find(pen_value->value()) != templates.end())
     {
@@ -402,16 +407,39 @@ void UrlEncoder::AddTemplate(const std::string& new_template)
     templates[pen_value->value()].emplace(temp);
 }
 
-void UrlEncoder::AddTemplate(const std::vector<std::string>& new_templates)
+void UrlEncoder::AddTemplate(const std::vector<std::string>& new_templates,
+                             const bool overwrite)
 {
     for (auto temp : new_templates)
-        AddTemplate(temp);
+        AddTemplate(temp, overwrite);
 }
 
-void UrlEncoder::AddTemplate(const std::string* new_templates, size_t count)
+void UrlEncoder::AddTemplate(const std::string* new_templates,
+                             const size_t count,
+                             const bool overwrite)
 {
     for (size_t idx = 0; idx < count; idx++)
-        AddTemplate(new_templates[0]);
+        AddTemplate(new_templates[idx], overwrite);
+}
+
+void UrlEncoder::AddTemplate(const json& new_templates, const bool overwrite)
+{
+    // Parse json
+    UrlEncoder::pen_template_map res = ParseJson(new_templates);
+
+    for (auto p : res)
+    {
+        if (overwrite && templates.find(p.first) != templates.end())
+        {
+            // Overwrite the key's value
+            templates[p.first] = p.second;
+        }
+        else
+        {
+            // Skips if the key exists
+            templates.insert(p);
+        }
+    }
 }
 
 bool UrlEncoder::RemoveTemplate(const std::uint64_t pen)
@@ -479,6 +507,30 @@ json UrlEncoder::TemplatesToJson() const
 
 void UrlEncoder::TemplatesFromJson(const json& data)
 {
+    templates.clear();
+    AddTemplate(data);
+}
+
+void UrlEncoder::Clear()
+{
+    templates.clear();
+}
+
+const UrlEncoder::pen_template_map& UrlEncoder::GetTemplates() const
+{
+    return templates;
+}
+
+const UrlEncoder::template_map&
+    UrlEncoder::GetTemplate(std::uint64_t pen) const
+{
+    return templates.at(pen);
+}
+
+/** Begin Private functions**/
+UrlEncoder::pen_template_map UrlEncoder::ParseJson(const json& data) const
+{
+    pen_template_map t_templates;
     template_map temps;
     for (unsigned int i = 0; i < data.size(); i++)
     {
@@ -500,24 +552,9 @@ void UrlEncoder::TemplatesFromJson(const json& data)
         }
 
         // Push the values onto the templates list
-        templates[static_cast<std::uint64_t>(data[i]["pen"])] = temps;
+        t_templates[static_cast<std::uint64_t>(data[i]["pen"])] = temps;
         temps.clear();
     }
-}
 
-void UrlEncoder::Clear()
-{
-    templates.clear();
+    return t_templates;
 }
-
-const UrlEncoder::pen_template_map& UrlEncoder::GetTemplates() const
-{
-    return templates;
-}
-
-const UrlEncoder::template_map&
-    UrlEncoder::GetTemplate(std::uint64_t pen) const
-{
-    return templates.at(pen);
-}
-

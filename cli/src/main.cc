@@ -13,6 +13,8 @@ int main(int argc, char** argv)
 
     try
     {
+        json d = TemplateFileManager::LoadTemplatesFromHttp("https://raw.githubusercontent.com/BrettRegnier/delete_me/main/templates.json");
+        std::cout << std::setw(4) << d << std::endl;
         if (argc == 1)
         {
             std::cout << "Requires at least 1 argument\n";
@@ -42,17 +44,21 @@ int main(int argc, char** argv)
         {
             ConfigurationManager::UpdateConfigFile(argv[1], argv[2]);
             std::string f_path = ConfigurationManager::GetTemplateFilePath();
-            // encoder.Clear();
-            // json data = TemplateFileManager::LoadTemplatesFromFile(f_path);
-            // encoder.TemplatesFromJson(data);
             std::cout << "Updated template file location\n";
+        }
+        else if (strcmp(argv[1], "template-http") == 0)
+        {
+            data = TemplateFileManager::LoadTemplatesFromHttp(argv[2]);
+            // encoder.AddTemplates(data);
+            TemplateFileManager::SaveTemplates(template_file,
+                                               encoder.TemplatesToJson());
         }
         else if (strcmp(argv[1], "add-template") == 0)
         {
             encoder.AddTemplate(argv[2]);
 
             // Save the template file
-            json data = encoder.TemplatesToJson();
+            data = encoder.TemplatesToJson();
             TemplateFileManager::SaveTemplates(template_file, data);
             std::cout << "Added template.\n";
         }

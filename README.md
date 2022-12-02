@@ -11,6 +11,7 @@ Important to note, the templates file will start empty. The configuration.json a
 - [CMake](https://cmake.org/) - Required
 - [Docker](https://docker-docs.netlify.app/install/) - Optional
 - Make [[Windows download](https://gnuwin32.sourceforge.net/packages/make.htm)] - Optional
+- [libcurl](https://curl.se/libcurl/c/) - Required for CLI
 ---
 ## Target Overview
 - `all`         Runs the docker target.
