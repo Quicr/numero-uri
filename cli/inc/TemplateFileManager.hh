@@ -24,13 +24,12 @@ namespace TemplateFileManager
         }
     }
 
-    bool SaveTemplates(const std::string &filename,
+    void SaveTemplates(const std::string &filename,
                        const json &templates)
     {
         std::ofstream file(filename);
+        file << std::setw(4) << templates << std::endl;
         file.close();
-
-        return true;
     }
 
     json LoadTemplatesFromFile(const std::string &filename)

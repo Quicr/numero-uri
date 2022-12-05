@@ -14,9 +14,13 @@ namespace
         TestUrlEncoder()
         {
             // Note, this does get tested later
-            encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259375>/meeting<int16>/user<int16>");
-            encoder.AddTemplate("https://webex.com/<int24=1>/<int16>/meeting<int16>/user<int16>");
-            encoder.AddTemplate("https://!{www.}!webex.com/<int24=16777215>/party<int5>/building<int3>/floor<int39>/room<int25>/meeting<int32>");
+            encoder.AddTemplate(std::string("https://!{www.}!webex.com/<int24="
+                "11259375>/meeting<int16>/user<int16>"));
+            encoder.AddTemplate(std::string("https://webex.com/<int24=1>/"
+                "<int16>/meeting<int16>/user<int16>"));
+            encoder.AddTemplate(std::string("https://!{www.}!webex.com/"
+                "<int24=16777215>/party<int5>/building<int3>/floor<int39>"
+                "/room<int25>/meeting<int32>"));
         }
 
         ~TestUrlEncoder() = default;
@@ -36,7 +40,8 @@ namespace
 
     TEST_F(TestUrlEncoder, EncodeUse128Bits)
     {
-        std::string url = "https://www.webex.com/16777215/party31/building7/floor549755813887/room33554431/meeting4294967295";
+        std::string url = "https://www.webex.com/16777215/party31/building7/"
+            "floor549755813887/room33554431/meeting4294967295";
 
         big_uint encoded = encoder.EncodeUrl(url);
         std::string res = encoded.ToDecimalString();
@@ -47,7 +52,8 @@ namespace
     TEST_F(TestUrlEncoder, EncodingOutOfRangeError)
     {
         EXPECT_THROW({
-            std::string url = "https://webex.com/11259375/meeting65536/user3213";
+            std::string url =
+                "https://webex.com/11259375/meeting65536/user3213";
             big_uint encoded = encoder.EncodeUrl(url);
         }, UrlEncoderOutOfRangeException);
     }
@@ -55,7 +61,8 @@ namespace
     TEST_F(TestUrlEncoder, EncodingNoMatchError)
     {
         EXPECT_THROW({
-            std::string url = "https://webex.com/123/12312/3232/meeting2132/user3213";
+            std::string url = "https://webex.com/123/12312/3232/meeting2132/"
+                "user3213";
             big_uint encoded = encoder.EncodeUrl(url);
         }, UrlEncoderNoMatchException);
     }
@@ -71,7 +78,8 @@ namespace
     TEST_F(TestUrlEncoder, DecodingErrors)
     {
         EXPECT_THROW({
-            encoder.AddTemplate("https://webex.com/<int24=2>/meeting<int16>/user<int16>");
+            encoder.AddTemplate(std::string("https://webex.com/<int24=2>/"
+                "meeting<int16>/user<int16>"));
             std::string url = "https://webex.com/2/meeting1234/user3213";
 
             big_uint encoded = encoder.EncodeUrl(url);
@@ -84,8 +92,8 @@ namespace
 
     TEST_F(TestUrlEncoder, AddTemplate)
     {
-        encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259376>"
-            "/meeting<int16>/user<int16>");
+        encoder.AddTemplate(std::string("https://!{www.}!webex.com/"
+            "<int24=11259376>/meeting<int16>/user<int16>"));
 
         std::cout << encoder.GetTemplates().size() << std::endl;
         std::cout << encoder.GetTemplates().size() << std::endl;
@@ -105,18 +113,15 @@ namespace
 
     TEST_F(TestUrlEncoder, AddBigTemplate)
     {
-        encoder.AddTemplate("https://!{www.}!webex.com/<int24=16777216>/party<int5>"
-            "/building<int3>/floor<int39>/room<int25>/meeting<int32>");
+        encoder.AddTemplate(std::string("https://!{www.}!webex.com/"
+            "<int24=16777216>/party<int5>/building<int3>/floor<int39>"
+            "/room<int25>/meeting<int32>"));
 
-        auto output_template = encoder.GetTemplate(16777216);
+        // There should be only 1 template with this PEN so just grab it
+        auto output_template = encoder.GetTemplate(16777216).at(-1);
         std::string actual_url = "^https://(?:www\\.)?webex.com/(\\d+)"
             "/party(\\d+)/building(\\d+)/floor(\\d+)/room(\\d+)/meeting(\\d+)$";
-        std::vector<uint32_t> actual_bits = {24,5,3,39,25,32};
-
-        std::cout << output_template.url << std::endl;
-        std::cout << output_template.url << std::endl;
-        std::cout << output_template.url << std::endl;
-        std::cout << output_template.url << std::endl;
+        std::vector<uint32_t> actual_bits = {5,3,39,25,32};
 
         ASSERT_EQ(actual_url, output_template.url);
         ASSERT_EQ(actual_bits, output_template.bits);
@@ -124,18 +129,18 @@ namespace
 
     TEST_F(TestUrlEncoder, RemoveTemplate)
     {
-        encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259376>/meeting<int16>"
-            "/user<int16>");
+        encoder.AddTemplate(std::string("https://!{www.}!webex.com/"
+            "<int24=11259376>/meeting<int16>/user<int16>"));
         encoder.RemoveTemplate(11259376);
         ASSERT_EQ(3, encoder.GetTemplates().size());
     }
 
     TEST_F(TestUrlEncoder, GetTemplate)
     {
-        encoder.AddTemplate("https://!{www.}!webex.com/<int24=23>/meeting<int16>"
-            "/user<int16>");
+        encoder.AddTemplate(std::string("https://!{www.}!webex.com/<int24=23>"
+            "/meeting<int16>/user<int16>"));
 
-        auto output_template = encoder.GetTemplate(23);
+        auto output_template = encoder.GetTemplate(23).at(-1);
 
         ASSERT_EQ("^https://(?:www\\.)?webex.com/(\\d+)/meeting(\\d+)/"
             "user(\\d+)$", output_template.url);
@@ -145,10 +150,10 @@ namespace
 
     TEST_F(TestUrlEncoder, GetTemplates)
     {
-        encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259374>/meeting<int16>"
-            "/user<int16>");
+        encoder.AddTemplate(std::string("https://!{www.}!webex.com/"
+            "<int24=11259374>/meeting<int16>/user<int16>"));
 
-        auto output = encoder.GetTemplate(11259374);
+        auto output = encoder.GetTemplate(11259374).at(-1);
 
         ASSERT_EQ("^https://(?:www\\.)?webex.com/(\\d+)/meeting(\\d+)"
             "/user(\\d+)$", output.url);
@@ -158,13 +163,18 @@ namespace
     TEST_F(TestUrlEncoder, TemplatesToJson)
     {
         UrlEncoder tmp_encoder;
-        tmp_encoder.AddTemplate("https://!{www.}!webex.com/<int24=11259374>"
-            "/meeting<int16>/user<int16>");
+        tmp_encoder.AddTemplate(std::string("https://!{www.}!webex.com/"
+            "<int24=11259374>/meeting<int16>/user<int16>"));
         json temp;
         temp["pen"] = 11259374;
-        temp["url"] = "^https://(?:www\\.)?webex.com/(\\d+)/meeting(\\d+)"
+
+        json sub_temp;
+        sub_temp["url"] = "^https://(?:www\\.)?webex.com/(\\d+)/meeting(\\d+)"
             "/user(\\d+)$";
-        temp["bits"] = {24, 16, 16};
+        sub_temp["bits"] = {24, 16, 16};
+        sub_temp["sub_pen"] = -1;
+
+        temp["templates"].push_back(sub_temp);
 
         json real;
         real.push_back(temp);
@@ -176,15 +186,20 @@ namespace
     {
         json temp;
         temp["pen"] = 11259374;
-        temp["url"] = "^https://(?:www\\.)?webex.com/(\\d+)/meeting(\\d+)"
+
+        json sub_temp;
+        sub_temp["url"] = "^https://(?:www\\.)?webex.com/(\\d+)/meeting(\\d+)"
             "/user(\\d+)$";
-        temp["bits"] = {24, 16, 16};
+        sub_temp["bits"] = {24, 16, 16};
+        sub_temp["sub_pen"] = -1;
+
+        temp["templates"].push_back(sub_temp);
 
         json j;
         j.push_back(temp);
         encoder.TemplatesFromJson(j);
 
-        auto output = encoder.GetTemplate(11259374);
+        auto output = encoder.GetTemplate(11259374).at(-1);
 
         ASSERT_EQ("^https://(?:www\\.)?webex.com/(\\d+)/meeting(\\d+)"
             "/user(\\d+)$",

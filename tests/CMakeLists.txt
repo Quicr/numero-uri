@@ -1,3 +1,3 @@
+add_subdirectory(test_big_uint)
 add_subdirectory(test_url_encoder)
 add_subdirectory(test_numeric_helper)
-add_subdirectory(test_uint128)

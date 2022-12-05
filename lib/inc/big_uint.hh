@@ -400,7 +400,7 @@ public:
 
             for (std::int64_t j = str.length() - 1; j >= 0; --j)
             {
-                // double each value in the string
+                // Double each value in the string
                 digit = (str[j] - '0') * 2;
                 str[j] = ((digit % 10) + overflow) + '0';
                 overflow = digit / 10;

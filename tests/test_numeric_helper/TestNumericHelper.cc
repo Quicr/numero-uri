@@ -5,8 +5,25 @@ namespace
 {
     TEST(TestNumericHelper, DoubleStringValue)
     {
-        // TODO
-        ASSERT_EQ(true, false);
+        std::string num = "5957";
+        NumericHelper::DoubleStringNumber(num);
+
+        ASSERT_EQ("11914", num);
+
+        num = "10000";
+        NumericHelper::DoubleStringNumber(num);
+
+        ASSERT_EQ("20000", num);
+
+        num = "65535";
+        NumericHelper::DoubleStringNumber(num);
+
+        ASSERT_EQ("131070", num);
+
+        num = "15";
+        NumericHelper::DoubleStringNumber(num);
+
+        ASSERT_EQ("30", num);
     }
 
     TEST(TestNumericHelper, SigFigs)

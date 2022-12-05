@@ -23,7 +23,7 @@ namespace
     {
         // TODO fix.
         big_uint value;
-        std::string str_in = "132133453000";
+        std::string str_in = "0d132133453000";
 
         value.FromDecimalString(str_in);
 

@@ -13,8 +13,8 @@ int main(int argc, char** argv)
 
     try
     {
-        json d = TemplateFileManager::LoadTemplatesFromHttp("https://raw.githubusercontent.com/BrettRegnier/delete_me/main/templates.json");
-        std::cout << std::setw(4) << d << std::endl;
+        // json d = TemplateFileManager::LoadTemplatesFromHttp("https://raw.githubusercontent.com/BrettRegnier/delete_me/main/templates.json");
+        // std::cout << std::setw(4) << d << std::endl;
         if (argc == 1)
         {
             std::cout << "Requires at least 1 argument\n";
@@ -22,6 +22,9 @@ int main(int argc, char** argv)
         }
 
         UrlEncoder encoder;
+
+        // TODO add optional overwrite flag to options parser when it becomes
+        // available
 
         // Get the template file from the configuration file
         std::string template_file = ConfigurationManager::GetTemplateFilePath();
@@ -48,14 +51,16 @@ int main(int argc, char** argv)
         }
         else if (strcmp(argv[1], "template-http") == 0)
         {
+            // Get templates from http using curl
             data = TemplateFileManager::LoadTemplatesFromHttp(argv[2]);
-            // encoder.AddTemplates(data);
-            TemplateFileManager::SaveTemplates(template_file,
-                                               encoder.TemplatesToJson());
+            encoder.AddTemplate(data);
+            data = encoder.TemplatesToJson();
+            TemplateFileManager::SaveTemplates(template_file, data);
+            std::cout << "Added templates from http" << std::endl;
         }
         else if (strcmp(argv[1], "add-template") == 0)
         {
-            encoder.AddTemplate(argv[2]);
+            encoder.AddTemplate(std::string(argv[2]));
 
             // Save the template file
             data = encoder.TemplatesToJson();
