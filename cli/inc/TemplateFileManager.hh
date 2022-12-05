@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <exception>
+#include <sstream>
 #include <curl/curl.h>
 #include "UrlEncoder.hh"
 
