@@ -17,8 +17,7 @@ docker-run:
 
 docker-test:
 	@docker build -t numero_uri --target test .
-	-@docker run -v ${PWD}:/numero_uri -e \
-		--rm -it numero_uri
+	-@docker run -v ${PWD}:/numero_uri --rm -it numero_uri
 
 build:
 	cmake -B build && cmake --build build

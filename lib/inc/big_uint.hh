@@ -5,6 +5,8 @@
 
 #include "NumericHelper.hh"
 
+#include <iostream>
+
 #define BIT_64 64
 
 class big_uint_exception : public std::runtime_error
@@ -86,17 +88,17 @@ public:
                   const std::uint16_t msb_offset)
     {
         if (msb_offset > digits.size() - 1)
-            throw big_uint_exception("Error. msb offset is out of range. "
-                "Max 127.");
+            throw big_uint_exception("Error. msb offset idx is out of range. "
+                "Max idx 127.");
 
-        if (msb_offset + num_bits > digits.size() - 1)
+        if (msb_offset + num_bits > digits.size())
             throw big_uint_exception("Error. Copied data is larger than "
-                "Max size of 127.");
+                "Max size of 128.");
 
         std::uint16_t to_idx = msb_offset;
         std::uint16_t from_idx = value.digits.size() - num_bits;
 
-        while (to_idx < digits.size() - 1 && from_idx < value.digits.size())
+        while (to_idx < digits.size() && from_idx < value.digits.size())
         {
             digits[to_idx] = value.at(from_idx);
             to_idx++;
@@ -422,6 +424,19 @@ public:
             }
         }
 
+        if (prepend_zeroes)
+        {
+            // Get the number of prepend zeroes
+            std::uint16_t zeroes = NumDecimalPrependZeroes();
+            std::string str_zeroes;
+            while (zeroes-- > 0)
+            {
+                str_zeroes.push_back('0');
+            }
+
+            str = str_zeroes + str;
+        }
+
         str.insert(0, "0d");
         return str;
     }
@@ -482,12 +497,13 @@ public:
         return GetValue(digits.size(), 0);
     }
 
-    static big_uint BitValue(std::uint32_t bits)
+    static big_uint BitValue(const std::uint32_t bits)
     {
+        std::uint32_t num_bits = bits;
         big_uint val;
 
         std::uint64_t i = val.digits.size() - 1;
-        while (bits-- > 0)
+        while (num_bits-- > 0)
         {
             val.digits[i--] = 1;
         }
@@ -496,40 +512,19 @@ public:
     }
 
 private:
-    std::uint64_t NumPrependZeroes(std::uint64_t value,
-                                   const std::uint64_t num_bits) const
+    std::uint16_t NumDecimalPrependZeroes() const
     {
-        // If the value is a zero make it 1 for the
-        // number of prepend zeroes that would precede the value
-        // Even though its zero
-        if (value == 0) value = 1;
+        // NOTE- ('\0' false) parameters are absolutely requires and will
+        // segfault without it as it will cause infinite recursion
 
-        // Get the max number for this type
-        std::uint64_t max_num = 1;
-        std::uint64_t size = num_bits;
-        while (size-- > 1)
-        {
-            max_num = max_num << 1;
-            max_num += 1;
-        }
+        // Get the decimal value
+        std::string val = big_uint::BitValue(digits.size()).ToDecimalString(
+            '\0', false);
+        std::string actual = ToDecimalString('\0', false);
 
-        // Now that we know the max value we can see how many sigfigs it has
-        std::uint64_t sig_figs = 0;
-        while (max_num > 0)
-        {
-            max_num /= 10;
-            sig_figs++;
-        }
-
-        // Now that we know the sig figs we can count down how
-        // many zeroes we need
-        while (value > 0 && sig_figs > 0)
-        {
-            value /= 10;
-            sig_figs--;
-        }
-
-        return sig_figs;
+        // The difference between the two string's size should be the number of
+        // zeroes in front for this number of bits
+        return static_cast<uint16_t>(val.size() - actual.size());
     }
 
     void InitDigits(std::uint32_t num_bits)

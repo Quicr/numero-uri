@@ -36,7 +36,7 @@ big_uint UrlEncoder::EncodeUrl(const std::string &url)
     }
 
     if (!found_template)
-        throw UrlEncoderException("Error. No match found for given url: "
+        throw UrlEncoderNoMatchException("Error. No match found for given url: "
             + url);
 
     // If there is not a match then there is no template for this PEN
@@ -74,6 +74,7 @@ big_uint UrlEncoder::EncodeUrl(const std::string &url)
     {
         val.FromString(matches[i].str(), big_uint::Representation::dec);
         bits = selected_template.bits[i-1];
+
 
         // Ensure the value isn't greater than the support bits
         max_val = big_uint::BitValue(bits);

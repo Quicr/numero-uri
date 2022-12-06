@@ -32,7 +32,7 @@ namespace
         ASSERT_EQ(output, std::stoull(str_in));
     }
 
-    TEST(Testbig_uint, ToBinary)
+    TEST(Testbig_uint, ToBinaryString)
     {
         big_uint value;
 
@@ -43,12 +43,12 @@ namespace
 
         std::string bin_out = value.ToBinaryString();
         // lol
-        std::string actual = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001110110110001111111";
+        std::string actual = "0b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001110110110001111111";
 
         ASSERT_EQ(bin_out, actual);
     }
 
-    TEST(Testbig_uint, ToString)
+    TEST(Testbig_uint, ToDecimalString)
     {
         big_uint value;
 
@@ -58,7 +58,7 @@ namespace
         value.SetValue(in, bits, 64);
 
         std::string str_out = value.ToDecimalString();
-        std::string actual = "0000000000000000000000000000123120534320";
+        std::string actual = "0d000000000000000000000000000123120534320";
 
         ASSERT_EQ(str_out, actual);
     }
@@ -73,12 +73,12 @@ namespace
         value.SetValue(first, 64, 0);
         value.SetValue(second, 64, 64);
 
-        std::string actual = "0000000012312053432000000000000000000001";
+        std::string actual = "0d000000002271172986819413459449539461121";
         ASSERT_EQ(value.ToDecimalString(), actual);
 
         value.Clear();
 
-        actual = "0000000000000000000000000000000000000000";
+        actual = "0d000000000000000000000000000000000000000";
         ASSERT_EQ(value.ToDecimalString(), actual);
     }
 }
