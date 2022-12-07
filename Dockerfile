@@ -19,4 +19,4 @@ CMD cmake -B build -DBUILD_TESTS=OFF && cmake --build build && build/bin/numero_
 
 FROM base as test
 CMD cmake -B build -DBUILD_TESTS=ON && cmake --build build \
-    && ctest --test-dir build/tests --output-on-failure
+    && ctest --test-dir build/tests --output-on-failure --verbose

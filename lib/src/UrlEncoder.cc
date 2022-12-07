@@ -3,6 +3,35 @@
 #include <regex>
 #include <iostream>
 
+UrlEncoder::UrlEncoder() : templates()
+{
+
+}
+
+UrlEncoder::UrlEncoder(const std::string &init_template)
+    : templates()
+{
+    AddTemplate(init_template);
+}
+
+UrlEncoder::UrlEncoder(const std::vector<std::string> &init_templates)
+    : templates()
+{
+    AddTemplate(init_templates);
+}
+
+UrlEncoder::UrlEncoder(const std::string* init_templates, const size_t count)
+    : templates()
+{
+    AddTemplate(init_templates, count);
+}
+
+UrlEncoder::UrlEncoder(const json& init_templates)
+    : templates()
+{
+    AddTemplate(init_templates);
+}
+
 big_uint UrlEncoder::EncodeUrl(const std::string &url)
 {
     // To extract the 3 groups from each url format
@@ -322,7 +351,8 @@ void UrlEncoder::AddTemplate(const std::string& new_template,
             if (temp_map.find(sub_pen.value()) != temp_map.end())
             {
                 throw UrlEncoderException("Error. Sub PEN key already exists "
-                    + sub_pen.ToDecimalString());
+                    + sub_pen.ToDecimalString() + " for PEN key "
+                    + pen_value->ToDecimalString());
             }
         }
 
@@ -455,15 +485,23 @@ bool UrlEncoder::RemoveTemplate(const std::uint64_t pen)
 bool UrlEncoder::RemoveSubTemplate(const std::uint32_t pen,
                                    const std::uint8_t sub_pen)
 {
+    // Check if the PEN exists
     if (templates.find(pen) == templates.end())
         return false;
 
+    // Get the template map for this PEN
     auto temp_map = templates[pen];
 
+    // Check if this sub PEN exists
     if (temp_map.find(sub_pen) == temp_map.end())
         return false;
 
+    // Remove the sub PEN
     temp_map.erase(sub_pen);
+
+    // If there are no more sub-PENs remove the PEN from the template
+    if (temp_map.size() == 0)
+        templates.erase(pen);
 
     return true;
 }
@@ -523,6 +561,22 @@ const UrlEncoder::template_map&
     UrlEncoder::GetTemplate(std::uint64_t pen) const
 {
     return templates.at(pen);
+}
+
+const std::uint64_t UrlEncoder::TemplateCount(const bool count_sub_pen) const
+{
+    if (!count_sub_pen)
+    {
+        return templates.size();
+    }
+
+    std::uint64_t sz=0;
+    for (auto temp_map : templates)
+    {
+        sz += temp_map.second.size();
+    }
+
+    return sz;
 }
 
 /** Begin Private functions**/

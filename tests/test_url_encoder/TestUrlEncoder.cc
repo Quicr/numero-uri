@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <vector>
+#include <string>
 #include "UrlEncoder.hh"
 #include "big_uint.hh"
 #include "nlohmann/json.hpp"
@@ -17,7 +19,7 @@ namespace
             encoder.AddTemplate(std::string("https://!{www.}!webex.com<pen="
                 "11259375>/meeting<int16>/user<int16>"));
             encoder.AddTemplate(std::string("https://webex.com<pen=1>/"
-                "<int16>/meeting<int16>/user<int16>"));
+                "<int16>/party<int16>/user<int16>"));
             encoder.AddTemplate(std::string("https://!{www.}!webex.com"
                 "<pen=16777215>/party<int5>/building<int3>/floor<int39>"
                 "/room<int25>/meeting<int32>"));
@@ -116,12 +118,120 @@ namespace
         ASSERT_EQ(actual_bits, output_template.bits);
     }
 
+    TEST_F(TestUrlEncoder, AddVectorOfTemplates)
+    {
+        UrlEncoder temp_encoder;
+        std::vector<std::string> template_v;
+        template_v.push_back("https://webex.com<pen=123>/meeting<int50>");
+        template_v.push_back("https://webex.com<pen=124>/meeting<int50>");
+        template_v.push_back("https://webex.com<pen=125>/meeting<int50>");
+        template_v.push_back("https://webex.com<pen=126>/meeting<int50>");
+        template_v.push_back("https://webex.com<pen=127>/meeting<int50>");
+
+        temp_encoder.AddTemplate(template_v);
+
+        ASSERT_EQ(temp_encoder.GetTemplates().size(), 5);
+    }
+
+    TEST_F(TestUrlEncoder, AddArrayOfTemplates)
+    {
+        UrlEncoder temp_encoder;
+        const std::uint64_t count = 5;
+        std::string template_a[count];
+        template_a[0] ="https://webex.com<pen=123>/meeting<int50>";
+        template_a[1] ="https://webex.com<pen=124>/meeting<int50>";
+        template_a[2] ="https://webex.com<pen=125>/meeting<int50>";
+        template_a[3] ="https://webex.com<pen=126>/meeting<int50>";
+        template_a[4] ="https://webex.com<pen=127>/meeting<int50>";
+
+        temp_encoder.AddTemplate(template_a, count);
+
+        ASSERT_EQ(temp_encoder.GetTemplates().size(), 5);
+    }
+
+    TEST_F(TestUrlEncoder, AddJsonOfTemplates)
+    {
+        json temp;
+        temp["pen"] = 777;
+
+        json sub_temp;
+        sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting(\\d+)"
+            "/user(\\d+)/fun(\\d+)$";
+        sub_temp["bits"] = {16, 16, 32};
+        sub_temp["sub_pen"] = -1;
+
+        temp["templates"].push_back(sub_temp);
+
+        json j;
+        j.push_back(temp);
+        encoder.TemplatesFromJson(j);
+
+        auto output = encoder.GetTemplate(777).at(-1);
+
+        ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting(\\d+)"
+            "/user(\\d+)/fun(\\d+)$",
+            output.url);
+        ASSERT_EQ(std::vector<std::uint32_t>({16, 16, 32}), output.bits);
+    }
+
     TEST_F(TestUrlEncoder, RemoveTemplate)
     {
-        encoder.AddTemplate(std::string("https://!{www.}!webex.com/"
+        UrlEncoder temp_encoder;
+        temp_encoder.AddTemplate(std::string("https://!{www.}!webex.com/"
             "<pen=11259376>/meeting<int16>/user<int16>"));
-        encoder.RemoveTemplate(11259376);
-        ASSERT_EQ(3, encoder.GetTemplates().size());
+        temp_encoder.RemoveTemplate(11259376);
+        ASSERT_EQ(0, temp_encoder.GetTemplates().size());
+        temp_encoder.AddTemplate(std::string("https://!{www.}!webex.com/"
+            "<pen=777><sub_pen=10>/meeting<int16>/user<int16>"));
+        temp_encoder.RemoveSubTemplate(777, 10);
+        ASSERT_EQ(0, temp_encoder.GetTemplates().size());
+    }
+
+    TEST_F(TestUrlEncoder, TemplatesToJson)
+    {
+        UrlEncoder temp_encoder;
+        temp_encoder.AddTemplate(std::string("https://!{www.}!webex.com"
+            "<pen=11259374>/meeting<int16>/user<int16>"));
+        json temp;
+        temp["pen"] = 11259374;
+
+        json sub_temp;
+        sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting(\\d+)"
+            "/user(\\d+)$";
+        sub_temp["bits"] = {16, 16};
+        sub_temp["sub_pen"] = -1;
+
+        temp["templates"].push_back(sub_temp);
+
+        json real;
+        real.push_back(temp);
+
+        ASSERT_EQ(temp_encoder.TemplatesToJson(), real);
+    }
+
+    TEST_F(TestUrlEncoder, TemplatesFromJson)
+    {
+        json temp;
+        temp["pen"] = 11259374;
+
+        json sub_temp;
+        sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting(\\d+)"
+            "/user(\\d+)$";
+        sub_temp["bits"] = {16, 16};
+        sub_temp["sub_pen"] = -1;
+
+        temp["templates"].push_back(sub_temp);
+
+        json j;
+        j.push_back(temp);
+        encoder.TemplatesFromJson(j);
+
+        auto output = encoder.GetTemplate(11259374).at(-1);
+
+        ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting(\\d+)"
+            "/user(\\d+)$",
+            output.url);
+        ASSERT_EQ(std::vector<std::uint32_t>({16, 16}), output.bits);
     }
 
     TEST_F(TestUrlEncoder, GetTemplate)
@@ -149,51 +259,15 @@ namespace
         ASSERT_EQ(std::vector<std::uint32_t>({16, 16}), output.bits);
     }
 
-    TEST_F(TestUrlEncoder, TemplatesToJson)
+    TEST_F(TestUrlEncoder, TemplateCount)
     {
-        UrlEncoder tmp_encoder;
-        tmp_encoder.AddTemplate(std::string("https://!{www.}!webex.com"
+        ASSERT_EQ(encoder.TemplateCount(false), 3);
+        ASSERT_EQ(encoder.TemplateCount(true), 3);
+
+        encoder.AddTemplate(std::string("https://!{www.}!webex.com"
             "<pen=11259374>/meeting<int16>/user<int16>"));
-        json temp;
-        temp["pen"] = 11259374;
 
-        json sub_temp;
-        sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting(\\d+)"
-            "/user(\\d+)$";
-        sub_temp["bits"] = {16, 16};
-        sub_temp["sub_pen"] = -1;
-
-        temp["templates"].push_back(sub_temp);
-
-        json real;
-        real.push_back(temp);
-
-        ASSERT_EQ(tmp_encoder.TemplatesToJson(), real);
-    }
-
-    TEST_F(TestUrlEncoder, TemplatesFromJson)
-    {
-        json temp;
-        temp["pen"] = 11259374;
-
-        json sub_temp;
-        sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting(\\d+)"
-            "/user(\\d+)$";
-        sub_temp["bits"] = {16, 16};
-        sub_temp["sub_pen"] = -1;
-
-        temp["templates"].push_back(sub_temp);
-
-        json j;
-        j.push_back(temp);
-        encoder.TemplatesFromJson(j);
-
-        auto output = encoder.GetTemplate(11259374).at(-1);
-
-        ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting(\\d+)"
-            "/user(\\d+)$",
-            output.url);
-        ASSERT_EQ(std::vector<std::uint32_t>({16, 16}), output.bits);
+        ASSERT_EQ(encoder.TemplateCount(true), 4);
     }
 
     TEST_F(TestUrlEncoder, Clear)

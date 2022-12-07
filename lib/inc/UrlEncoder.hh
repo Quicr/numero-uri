@@ -122,6 +122,91 @@ public:
     const std::uint16_t Sub_Pen_Bits = 8;
 
     /*
+    *  UrlEncoder::UrlEncoder
+    *
+    *  Description:
+    *       Initializes an empty UrlEncoder
+    *
+    *  Parameters:
+    *
+    *  Returns:
+    *
+    *  Comments:
+    *
+    */
+    UrlEncoder();
+
+    /*
+    *  UrlEncoder::UrlEncoder
+    *
+    *  Description:
+    *       Initializes an UrlEncoder with the given template
+    *
+    *  Parameters:
+    *      init_template [in]
+    *          A string containing a template
+    *
+    *  Returns:
+    *
+    *  Comments:
+    *
+    */
+    UrlEncoder(const std::string &init_template);
+
+    /*
+    *  UrlEncoder::UrlEncoder
+    *
+    *  Description:
+    *       Initializes an UrlEncoder with the given templates
+    *
+    *  Parameters:
+    *      init_template [in]
+    *          A vector of strings containing templates
+    *
+    *  Returns:
+    *
+    *  Comments:
+    *
+    */
+    UrlEncoder(const std::vector<std::string> &init_templates);
+
+    /*
+    *  UrlEncoder::UrlEncoder
+    *
+    *  Description:
+    *       Initializes an UrlEncoder with the given templates
+    *
+    *  Parameters:
+    *      init_template [in]
+    *          A array of strings containing templates
+    *      count [in]
+    *          The size of the array
+    *
+    *  Returns:
+    *
+    *  Comments:
+    *
+    */
+    UrlEncoder(const std::string* init_templates, const size_t count);
+
+    /*
+    *  UrlEncoder::UrlEncoder
+    *
+    *  Description:
+    *       Initializes an UrlEncoder with the given templates
+    *
+    *  Parameters:
+    *      init_template [in]
+    *          A json object that contains complete templates
+    *
+    *  Returns:
+    *
+    *  Comments:
+    *
+    */
+    UrlEncoder(const json &init_templates);
+
+    /*
     *  UrlEncoder::EncodeUrl
     *
     *  Description:
@@ -386,6 +471,10 @@ public:
     */
     const template_map& GetTemplate(std::uint64_t pen) const;
 
+
+    const std::uint64_t TemplateCount(
+        const bool count_sub_pen=true) const;
+
 private:
     /*
     *  UrlEncoder::PraseJson
@@ -403,5 +492,7 @@ private:
     *  Comments:
     */
     pen_template_map ParseJson(const json& data) const;
+
+    /* Variables */
     pen_template_map templates;
 };
