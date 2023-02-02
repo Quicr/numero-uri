@@ -31,28 +31,14 @@ struct UrlEncoderException : public std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
-class UrlEncoderNoMatchException : public std::runtime_error
+struct UrlEncoderNoMatchException : public std::runtime_error
 {
-  public:
-    explicit UrlEncoderNoMatchException(const std::string &what_arg) : std::runtime_error(what_arg)
-    {
-    }
-
-    explicit UrlEncoderNoMatchException(const char *what_arg) : std::runtime_error(what_arg)
-    {
-    }
+    using std::runtime_error::runtime_error;
 };
 
-class UrlDecodeNoMatchException : public std::runtime_error
+struct UrlDecodeNoMatchException : public std::runtime_error
 {
-  public:
-    explicit UrlDecodeNoMatchException(const std::string &what_arg) : std::runtime_error(what_arg)
-    {
-    }
-
-    explicit UrlDecodeNoMatchException(const char *what_arg) : std::runtime_error(what_arg)
-    {
-    }
+    using std::runtime_error::runtime_error;
 };
 
 class UrlEncoder
