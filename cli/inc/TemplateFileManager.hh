@@ -6,7 +6,7 @@
 #include <exception>
 #include <sstream>
 #include <curl/curl.h>
-#include "UrlEncoder.hh"
+#include "UrlEncoder.h"
 
 #include "nlohmann/json.hpp"
 using json = nlohmann::json;

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <chrono>
-#include "UrlEncoder.hh"
+#include "UrlEncoder.h"
 
 namespace
 {
@@ -15,7 +15,8 @@ namespace
         {
             temp_str = "https://webex.com<pen=";
             temp_str += std::to_string(i);
-            temp_str += ">/meeting<int16>/chat<int16>/user<int16>/clan<int16>";
+            temp_str +=
+            ">/meeting<int16>/chat<int16>/user<int16>/clan<int16>";
 
             encoder.AddTemplate(temp_str);
         }
@@ -33,8 +34,9 @@ namespace
         auto res = std::chrono::duration_cast<std::chrono::milliseconds>(
             end-start).count();
 
-        std::cout << "[UrlEncoder] Result: " << encoded.ToHexString() << "\n";
-        std::cout << "[UrlEncoder] Elapsed encoding time: " << res << "ms\n";
+        std::cout << "[UrlEncoder] Result: " << encoded.to_hex() <<
+        "\n"; std::cout << "[UrlEncoder] Elapsed encoding time: " << res <<
+        "ms\n";
 
         std::cout << "[UrlEncoder] Finish OnlyPEN performance test\n\n";
     }
@@ -50,7 +52,8 @@ namespace
         {
             temp_str = "https://webex.com<pen=0><sub_pen=";
             temp_str += std::to_string(i);
-            temp_str += ">/meeting<int16>/chat<int16>/user<int16>/clan<int16>";
+            temp_str +=
+            ">/meeting<int16>/chat<int16>/user<int16>/clan<int16>";
 
             encoder.AddTemplate(temp_str);
         }
@@ -69,8 +72,9 @@ namespace
         auto res = std::chrono::duration_cast<std::chrono::milliseconds>(
             end-start).count();
 
-        std::cout << "[UrlEncoder] Result: " << encoded.ToHexString() << "\n";
-        std::cout << "[UrlEncoder] Elapsed encoding time: " << res << "ms\n";
+        std::cout << "[UrlEncoder] Result: " << encoded.to_hex() <<
+        "\n"; std::cout << "[UrlEncoder] Elapsed encoding time: " << res <<
+        "ms\n";
 
         std::cout << "[UrlEncoder] Finish OnlySubPEN performance test\n\n";
     }
@@ -112,8 +116,9 @@ namespace
         auto res = std::chrono::duration_cast<std::chrono::milliseconds>(
             end-start).count();
 
-        std::cout << "[UrlEncoder] Result: " << encoded.ToHexString() << "\n";
-        std::cout << "[UrlEncoder] Elapsed encoding time: " << res << "ms\n";
+        std::cout << "[UrlEncoder] Result: " << encoded.to_hex() <<
+        "\n"; std::cout << "[UrlEncoder] Elapsed encoding time: " << res <<
+        "ms\n";
 
         std::cout << "[UrlEncoder] Finish Full Performance test\n\n";
     }

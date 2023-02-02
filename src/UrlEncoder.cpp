@@ -1,38 +1,34 @@
-#include "UrlEncoder.hh"
-#include "NumericHelper.hh"
-#include <regex>
+#include <UrlEncoder.h>
+#include <quicr/hex_endec.h>
+
 #include <iostream>
+#include <regex>
 
 UrlEncoder::UrlEncoder() : templates()
 {
-
 }
 
-UrlEncoder::UrlEncoder(const std::string &init_template)
-    : templates()
+UrlEncoder::UrlEncoder(const std::string &init_template) : templates()
 {
     AddTemplate(init_template);
 }
 
-UrlEncoder::UrlEncoder(const std::vector<std::string> &init_templates)
-    : templates()
+UrlEncoder::UrlEncoder(const std::vector<std::string> &init_templates) : templates()
 {
     AddTemplate(init_templates);
 }
 
-UrlEncoder::UrlEncoder(const std::string* init_templates, const size_t count)
-    : templates()
+UrlEncoder::UrlEncoder(const std::string *init_templates, const size_t count) : templates()
 {
     AddTemplate(init_templates, count);
 }
 
-UrlEncoder::UrlEncoder(const json& init_templates)
-    : templates()
+UrlEncoder::UrlEncoder(const json &init_templates) : templates()
 {
     AddTemplate(init_templates);
 }
 
-big_uint UrlEncoder::EncodeUrl(const std::string &url)
+quicr::Name UrlEncoder::EncodeUrl(const std::string &url) const
 {
     // To extract the 3 groups from each url format
     std::smatch matches;
@@ -61,12 +57,12 @@ big_uint UrlEncoder::EncodeUrl(const std::string &url)
         }
 
         // Found the template break out of the loop
-        if (found_template) break;
+        if (found_template)
+            break;
     }
 
     if (!found_template)
-        throw UrlEncoderNoMatchException("Error. No match found for given url: "
-            + url);
+        throw UrlEncoderNoMatchException("Error. No match found for given url: " + url);
 
     // If there is not a match then there is no template for this PEN
     if (!std::regex_match(url, matches, std::regex(selected_template.url)))
@@ -75,87 +71,55 @@ big_uint UrlEncoder::EncodeUrl(const std::string &url)
     // Need the same number of numbers as the template expects
     if (matches.size() - 1 != selected_template.bits.size())
         throw UrlEncoderNoMatchException("Error. Match is missing values for "
-            "the given template");
+                                         "the given template");
 
-
-    big_uint val = pen;
-    std::uint32_t bits = Pen_Bits;
-    std::uint32_t offset_bits = 0;
-    big_uint max_val;
-
-    big_uint encoded;
-
-    // Set the PEN value and bits
-    encoded.SetValue(val, bits, offset_bits);
-    offset_bits += bits;
+    std::vector<uint64_t> values;
+    std::vector<uint8_t> distribution;
+    values.push_back(pen);
+    distribution.push_back(Pen_Bits);
 
     // Set the sub PEN value and bits if it is positive
     if (sub_pen >= 0)
     {
-        val = sub_pen;
-        bits = Sub_Pen_Bits;
-        encoded.SetValue(val, bits, offset_bits);
-        offset_bits += bits;
+        values.push_back(sub_pen);
+        distribution.push_back(Sub_Pen_Bits);
     }
 
     // Skip the first group since its the whole match
     for (std::uint32_t i = 1; i < matches.size(); i++)
     {
-        val.FromString(matches[i].str(), big_uint::Representation::dec);
-        bits = selected_template.bits[i-1];
+        uint64_t val = std::stoull(matches[i].str());
+        std::uint32_t bits = selected_template.bits[i - 1];
 
-
-        // Ensure the value isn't greater than the support bits
-        max_val = big_uint::BitValue(bits);
-
-        if (val > max_val)
-        {
-            throw UrlEncoderOutOfRangeException(
-                "Error. Out of range. Group " + std::to_string(i)
-                + " value is " + val.ToDecimalString()
-                + " but the max value is " + max_val.ToDecimalString(),
-                i, val.ToDecimalString());
-        }
-
-        // Set the value in the big_uint variable
-        encoded.SetValue(val, bits, offset_bits);
-
-        // Slide the bit window over
-        offset_bits += bits;
+        values.push_back(val);
+        distribution.push_back(bits);
     }
 
-    return encoded;
+    return quicr::HexEndec<128>::Encode(distribution, values);
 }
 
-std::string UrlEncoder::DecodeUrl(const std::string &code_str,
-                                  const big_uint::Representation rep)
+std::string UrlEncoder::DecodeUrl(const quicr::Name &code)
 {
-    // Convert the string to the big_uint
-    big_uint code(code_str, rep);
-    return DecodeUrl(code);
+    return DecodeUrl(code.to_hex());
 }
 
-std::string UrlEncoder::DecodeUrl(const big_uint &code)
+std::string UrlEncoder::DecodeUrl(const std::string &code)
 {
     // If the sub pen is not used then we use 0 bits on it
     std::uint32_t pen_sub_bits = 0;
 
-    std::string decoded;
-
-    // Assumed that the first 24 bits is always the PEN
-    std::uint64_t pen = code.GetValue(Pen_Bits, 0);
+    // Assumed that the first 24 and 8 bits are PEN and Sub PEN respectively.
+    // Other bits can be ignored for now.
+    const auto &[pen, sub_pen] = quicr::HexEndec<128, Pen_Bits, Sub_Pen_Bits>::Decode(code);
+    std::vector<uint8_t> bit_distribution = {Pen_Bits};
 
     // Check if pen exists in list of templates
     if (templates.find(pen) == templates.end())
-        throw UrlDecodeNoMatchException(
-            "Error. No templates matches the found PEN " + std::to_string(pen));
+        throw UrlDecodeNoMatchException("Error. No templates matches the found PEN " + std::to_string(pen));
 
     // Get the template for that PEN
     auto temp_map = templates.at(pen);
     UrlEncoder::url_template temp;
-
-    // Get the sub PEN value from the big_uint offset by the PEN bits
-    std::uint64_t sub_pen = code.GetValue(Sub_Pen_Bits, Pen_Bits);
 
     // Search for this sub PEN
     bool found_sub_pen = false;
@@ -169,17 +133,19 @@ std::string UrlEncoder::DecodeUrl(const big_uint &code)
     {
         temp = temp_map.at(sub_pen);
         pen_sub_bits = Sub_Pen_Bits;
+        bit_distribution.push_back(pen_sub_bits);
     }
     else
     {
         // No sub PEN was found for this PEN so throw an error.
         throw UrlDecodeNoMatchException("Error. No templates matches the "
-            "found PEN " + std::to_string(pen) + " and sub PEN " +
-            std::to_string(sub_pen));
+                                        "found PEN " +
+                                        std::to_string(pen) + " and sub PEN " + std::to_string(sub_pen));
     }
 
     // Get the regex
     std::string reg = temp.url;
+    std::string decoded;
 
     size_t idx = 0;
     std::vector<size_t> group_indices;
@@ -204,7 +170,7 @@ std::string UrlEncoder::DecodeUrl(const big_uint &code)
         if (ch == '(')
         {
             // Check the next couple characters for non matching-groups
-            if (idx + 3 < reg.size() && reg[idx+1] == '?' && reg[idx+2] == ':')
+            if (idx + 3 < reg.size() && reg[idx + 1] == '?' && reg[idx + 2] == ':')
             {
                 idx += 3;
                 continue;
@@ -230,17 +196,16 @@ std::string UrlEncoder::DecodeUrl(const big_uint &code)
         ++idx;
     }
 
-    std::uint32_t num_bits;
+    const size_t num_pens = bit_distribution.size();
+    bit_distribution.insert(bit_distribution.end(), temp.bits.begin(), temp.bits.end());
+    auto decoded_nums = quicr::HexEndec<128>::Decode(bit_distribution, code);
+    decoded_nums.erase(decoded_nums.begin(), decoded_nums.begin() + num_pens);
+
     size_t str_offset = 0;
     size_t insert_idx;
     std::string insert_str;
-    std::uint32_t bit_offset = Pen_Bits + pen_sub_bits;
     for (std::uint32_t i = 0; i < group_indices.size(); i++)
     {
-        // Get the number of bits for this number
-        // skip the pen bits
-        num_bits = temp.bits[i];
-
         // Calc how much we've inserted into the string
         str_offset += insert_str.length();
 
@@ -248,10 +213,7 @@ std::string UrlEncoder::DecodeUrl(const big_uint &code)
         insert_idx = group_indices[i] + str_offset;
 
         // Get the bits converted into decimal
-        insert_str = std::to_string(code.GetValue(num_bits, bit_offset));
-
-        // Add the number of bits that was read
-        bit_offset += num_bits;
+        insert_str = std::to_string(decoded_nums[i]);
 
         // Insert the numeric values into the decoded string
         decoded.insert(insert_idx, insert_str);
@@ -260,12 +222,10 @@ std::string UrlEncoder::DecodeUrl(const big_uint &code)
     return decoded;
 }
 
-void UrlEncoder::AddTemplate(const std::string& new_template,
-                             const bool overwrite)
+void UrlEncoder::AddTemplate(const std::string &new_template, const bool overwrite)
 {
     // The first value must be filled in with their PEN
-    const std::string example =
-        "https://!{www.}!webex.com<int24=777>/meeting<int16>/user<int16>";
+    const std::string example = "https://!{www.}!webex.com<int24=777>/meeting<int16>/user<int16>";
 
     // If there is a !{...}! it is an optional group
     const std::regex optional_regex("!\\{(.+)\\}!");
@@ -290,73 +250,72 @@ void UrlEncoder::AddTemplate(const std::string& new_template,
     temp.second.url = '^';
 
     // Put everything up to the first option into the regex
-    temp.second.url += new_template.substr(0, start-1);
+    temp.second.url += new_template.substr(0, start - 1);
 
     // Get the pen from the string
     end = new_template.find('>', start);
-    std::string pen_str = new_template.substr(start, end-start);
+    std::string pen_str = new_template.substr(start, end - start);
     // Get the match the pen to the regex
     if (!std::regex_match(pen_str, matches, pen_regex))
         throw UrlEncoderException("Error. Missing definition for PEN. "
-            " Example: " + example);
+                                  " Example: " +
+                                  example);
 
     // Check if a value was entered
     if (matches.length() < 2)
         throw UrlEncoderException("Error. No match found for the value of the "
-            " PEN. Example: :" + example);
+                                  " PEN. Example: :" +
+                                  example);
 
-    big_uint* pen_value;
+    uint32_t pen_value;
     try
     {
         // Get the pen group value
-        pen_value = new big_uint(matches[1].str(),
-                                 big_uint::Representation::dec,
-                                 24);
+        pen_value = std::stoul(matches[1].str());
     }
-    catch(std::out_of_range &ex)
+    catch (std::out_of_range &ex)
     {
         throw UrlEncoderException("Error. PEN value is too large for a 64 bit "
-            " PEN value found = " + matches[1].str() + " " + ex.what());
+                                  " PEN value found = " +
+                                  matches[1].str() + " " + ex.what());
     }
 
     if (overwrite)
-        templates.erase(pen_value->value());
+        templates.erase(pen_value);
 
     // Check if a sub PEN was provided
     // Check for sub pen
     std::size_t sub_pen_start = new_template.find('<', end) + 1;
     std::size_t sub_pen_end = new_template.find('>', sub_pen_start);
-    std::string sub_pen_str = new_template.substr(sub_pen_start,
-                                                  sub_pen_end-sub_pen_start);
+    std::string sub_pen_str = new_template.substr(sub_pen_start, sub_pen_end - sub_pen_start);
 
     // Attempt to put the value into the int with a max size of 8 bits
     // Throws an error if it goes over the limit
     if (std::regex_match(sub_pen_str, matches, sub_pen_regex))
     {
-        big_uint sub_pen(matches[1].str(),
-                        big_uint::Representation::dec,
-                        8);
+        uint8_t sub_pen = std::stoul(matches[1].str());
+
         // Do some error checking
-        if (templates.find(pen_value->value()) != templates.end())
+        if (templates.find(pen_value) != templates.end())
         {
-            template_map temp_map = templates[pen_value->value()];
+            template_map temp_map = templates[pen_value];
             if (temp_map.find(-1) != temp_map.end())
             {
                 // If there are not sub PENs for this PEN
                 throw UrlEncoderException("Error. Sub PENs are not used for PEN"
-                    " " + pen_value->ToDecimalString());
+                                          " " +
+                                          std::to_string(pen_value));
             }
 
             // Check if this PEN template has a sub PEN of the same key
-            if (temp_map.find(sub_pen.value()) != temp_map.end())
+            if (temp_map.find(sub_pen) != temp_map.end())
             {
-                throw UrlEncoderException("Error. Sub PEN key already exists "
-                    + sub_pen.ToDecimalString() + " for PEN key "
-                    + pen_value->ToDecimalString());
+                throw UrlEncoderException("Error. Sub PEN key already exists " + std::to_string(sub_pen) +
+                                          " for PEN key " + std::to_string(pen_value));
             }
         }
 
-        temp.first = sub_pen.value();
+        temp.first = sub_pen;
 
         // Move the end variable based on the sub PEN's end
         end = sub_pen_end;
@@ -381,15 +340,14 @@ void UrlEncoder::AddTemplate(const std::string& new_template,
             end = new_template.find('>', start);
 
             // Pull out the group
-            group_str = new_template.substr(start, end-start);
+            group_str = new_template.substr(start, end - start);
 
             // Run it through regex
             if (!std::regex_match(group_str, matches, bit_group_regex))
             {
                 // Failed so throw an error
-                throw UrlEncoderException(
-                    "Error. Could not find the end of group starting at position " +
-                    std::to_string(start));
+                throw UrlEncoderException("Error. Could not find the end of group starting at position " +
+                                          std::to_string(start));
             }
 
             // Get the bits from the match
@@ -431,26 +389,22 @@ void UrlEncoder::AddTemplate(const std::string& new_template,
             temp.second.url.replace(optional_idx, optional_sz, "(?:" + optional_str + ")?");
     }
 
-
-    templates[pen_value->value()].emplace(temp);
+    templates[pen_value].emplace(temp);
 }
 
-void UrlEncoder::AddTemplate(const std::vector<std::string>& new_templates,
-                             const bool overwrite)
+void UrlEncoder::AddTemplate(const std::vector<std::string> &new_templates, const bool overwrite)
 {
     for (auto temp : new_templates)
         AddTemplate(temp, overwrite);
 }
 
-void UrlEncoder::AddTemplate(const std::string* new_templates,
-                             const size_t count,
-                             const bool overwrite)
+void UrlEncoder::AddTemplate(const std::string *new_templates, const size_t count, const bool overwrite)
 {
     for (size_t idx = 0; idx < count; idx++)
         AddTemplate(new_templates[idx], overwrite);
 }
 
-void UrlEncoder::AddTemplate(const json& new_templates, const bool overwrite)
+void UrlEncoder::AddTemplate(const json &new_templates, const bool overwrite)
 {
     // Parse json
     UrlEncoder::pen_template_map res = ParseJson(new_templates);
@@ -482,8 +436,7 @@ bool UrlEncoder::RemoveTemplate(const std::uint64_t pen)
     return true;
 }
 
-bool UrlEncoder::RemoveSubTemplate(const std::uint32_t pen,
-                                   const std::uint8_t sub_pen)
+bool UrlEncoder::RemoveSubTemplate(const std::uint32_t pen, const std::uint8_t sub_pen)
 {
     // Check if the PEN exists
     if (templates.find(pen) == templates.end())
@@ -541,7 +494,7 @@ json UrlEncoder::TemplatesToJson() const
     return j;
 }
 
-void UrlEncoder::TemplatesFromJson(const json& data)
+void UrlEncoder::TemplatesFromJson(const json &data)
 {
     templates.clear();
     AddTemplate(data);
@@ -552,13 +505,12 @@ void UrlEncoder::Clear()
     templates.clear();
 }
 
-const UrlEncoder::pen_template_map& UrlEncoder::GetTemplates() const
+const UrlEncoder::pen_template_map &UrlEncoder::GetTemplates() const
 {
     return templates;
 }
 
-const UrlEncoder::template_map&
-    UrlEncoder::GetTemplate(std::uint64_t pen) const
+const UrlEncoder::template_map &UrlEncoder::GetTemplate(std::uint64_t pen) const
 {
     return templates.at(pen);
 }
@@ -570,7 +522,7 @@ const std::uint64_t UrlEncoder::TemplateCount(const bool count_sub_pen) const
         return templates.size();
     }
 
-    std::uint64_t sz=0;
+    std::uint64_t sz = 0;
     for (auto temp_map : templates)
     {
         sz += temp_map.second.size();
@@ -580,7 +532,7 @@ const std::uint64_t UrlEncoder::TemplateCount(const bool count_sub_pen) const
 }
 
 /** Begin Private functions**/
-UrlEncoder::pen_template_map UrlEncoder::ParseJson(const json& data) const
+UrlEncoder::pen_template_map UrlEncoder::ParseJson(const json &data) const
 {
     pen_template_map t_templates;
     template_map temps;
@@ -597,7 +549,7 @@ UrlEncoder::pen_template_map UrlEncoder::ParseJson(const json& data) const
 
             // Get the bits
             url_temp.bits.clear();
-            for (auto& element : data[i]["templates"][j]["bits"])
+            for (auto &element : data[i]["templates"][j]["bits"])
                 url_temp.bits.push_back(static_cast<std::uint32_t>(element));
 
             temps[data[i]["templates"][j]["sub_pen"]] = url_temp;

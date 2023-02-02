@@ -1,6 +1,8 @@
 cmd 			?= RUN
 args			?=
 
+CLANG_FORMAT=clang-format -i
+
 .PHONY: all
 
 all: docker
@@ -28,3 +30,8 @@ test:
 
 clean:
 	rm -rf build
+	
+format:
+	@find lib/inc -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" | xargs ${CLANG_FORMAT}
+	@find lib/src -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" | xargs ${CLANG_FORMAT}
+	@find tests -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" | xargs ${CLANG_FORMAT}
