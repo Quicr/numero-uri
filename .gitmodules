@@ -4,3 +4,7 @@
 [submodule "contrib/googletest"]
 	path = contrib/googletest
 	url = https://github.com/google/googletest.git
+[submodule "contrib/libquicr"]
+	path = contrib/libquicr
+	url = git@github.com:Quicr/new-libquicr.git
+	branch = main

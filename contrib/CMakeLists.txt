@@ -17,6 +17,7 @@ if (GIT_SUBMODULE)
         message(FATAL_ERROR "git submodule update --init --recursive failed with ${SUBMOD_RES}, please checkout submodules")
     endif()
     add_subdirectory(json)
+    add_subdirectory(libquicr)
 
     # googletests library
     if (BUILD_TESTS)
@@ -24,5 +25,4 @@ if (GIT_SUBMODULE)
         # Prevent override the parent project's compiler/linker settings for windows
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     endif()
-
 endif()
