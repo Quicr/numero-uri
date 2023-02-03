@@ -51,6 +51,16 @@ TEST_F(TestUrlEncoder, EncodeUse128Bits)
     ASSERT_EQ(encoded, actual);
 }
 
+
+TEST_F(TestUrlEncoder, EncodingOutOfRangeError)
+{
+    EXPECT_THROW({
+        std::string url =
+            "https://webex.com/meeting65536/user3213";
+        quicr::Name encoded = encoder.EncodeUrl(url);
+    }, UrlEncoderOutOfRangeException);
+}
+
 TEST_F(TestUrlEncoder, EncodingNoMatchError)
 {
     EXPECT_THROW(
@@ -64,20 +74,19 @@ TEST_F(TestUrlEncoder, EncodingNoMatchError)
 
 TEST_F(TestUrlEncoder, Decode)
 {
-    // {
-    //     std::string actual = "https://www.webex.com/meeting555/user777";
-    //     std::string encoded = "0xABCDEF022B0309000000000000000000";
-    //     std::string decoded = encoder.DecodeUrl(encoded);
-    //     ASSERT_EQ(decoded, actual);
+    std::string actual = "https://www.webex.com/meeting555/user777";
+    std::string encoded = "0xabcdef022b0309000000000000000000";
+    std::string decoded = encoder.DecodeUrl(encoded);
+    ASSERT_EQ(decoded, actual);
+}
 
-    // }
-    {
-        std::string actual = "https://www.webex.com/party31/building7/floor549755813887/"
-                             "room33554431/meeting4294967295";
-        std::string encoded = "0xffffffffffffffffffffffffffffffff";
-        std::string decoded = encoder.DecodeUrl(encoded);
-        ASSERT_EQ(decoded, actual);
-    }
+TEST_F(TestUrlEncoder, Decode128bit)
+{
+    std::string actual = "https://www.webex.com/party31/building7/floor549755813887/"
+                            "room33554431/meeting4294967295";
+    std::string encoded = "0xffffffffffffffffffffffffffffffff";
+    std::string decoded = encoder.DecodeUrl(encoded);
+    ASSERT_EQ(decoded, actual);
 }
 
 TEST_F(TestUrlEncoder, DecodingErrors)

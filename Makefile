@@ -28,7 +28,7 @@ test:
 	cmake -B build -DBUILD_TESTS=ON && cmake --build build \
 		&& ctest --test-dir build/tests --output-on-failure
 
-clean:
+clean:Wasn
 	rm -rf build
 	
 format:
