@@ -28,11 +28,9 @@ jobs:
         
     - name: Install libqurl
       run: |
-         if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get update
-              sudo apt-get install libcurl4-openssl-dev
-         fi
-      shell: bash 
+        sudo apt-get update
+        sudo apt-get install libcurl4-openssl-dev
+      if: matrix.os == 'ubuntu-latest'
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
