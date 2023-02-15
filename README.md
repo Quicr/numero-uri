@@ -49,18 +49,27 @@ To build the tests and run them
 ### Docker
 - Add a template
 
-    ```make args='add-template https://webex.com<int24=123>/meeting<int16>/room<int16>'```
+    ```make args='add-template https://webex.com<pen=123>/meeting<int16>/room<int16>'```
 
-    Creates a template that receives 3 numbers groups in a URI according to the pattern given. The first group **<int24=123>** is the only time a group has a specified number and is required. The value must be a unique identifier for this template.
+    Creates a template that receives 3 numbers groups in a URI according to the pattern given. The first group **<pen=123>** is the only time a group is required. The value must be a unique identifier for this template.
+
+- Add a template with a sub-pen
+
+    ```make args='add-template https://webex.com<pen=1234><sub_pen=2>/obj<int16>/ver<int16>'```
+
+    Creates a template that receives 3 numbers groups in a URI according to the pattern given. The second group **<sub_pen=2>** is a sub-template number The value must be a unique identifier for this template.
+
+    Note: It is important to have the sub_pen immediately follow the pen, everything between <pen=xxx> and <sub_pen=xxx> is ignored, similarly, so is everything between <sub_pen> and the next slash (/).
+
 - Encode a template
 
     ```make args='encode https://webex.com/meeting2/room56'```
 
-    This will output the encoded number string **`0000013523996378521600000000000000000000`**. Which can be fed back in using the next command.
+    This will output the encoded number string **`0x00000500020038000000000000000000`**. Which can be fed back in using the next command.
 
 - Decode a number string
 
-    ```make args='decode 0000013523996378521600000000000000000000'```
+    ```make args='decode 0x00000500020038000000000000000000'```
 
     This will output the URI **`https://webex.com/meeting2/room56`** according to the template provided with the unique identifier.
 
@@ -86,7 +95,7 @@ To build the tests and run them
 
 - Decode a number string
 
-    ```./build/bin/numero_uri decode 0000013523996378521600000000000000000000```
+    ```./build/bin/numero_uri decode 0x00000500020038000000000000000000```
 
 - Remove a template
 
