@@ -414,8 +414,7 @@ void UrlEncoder::AddTemplate(const std::string& new_template, const bool overwri
             start = end + 1;
 
             // Push regex onto the string
-            // TODO add hex
-            temp.second.url += ("(\\d+)");
+            temp.second.url += ("((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))");
             continue;
         }
 
