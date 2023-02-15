@@ -86,9 +86,36 @@ quicr::Name UrlEncoder::EncodeUrl(const std::string& url) const
     }
 
     // Skip the first group since its the whole match
+    std::string prefix;
+    std::uint16_t base;
+    std::uint32_t sub_str_idx;
     for (std::uint32_t i = 1; i < matches.size(); i++)
     {
-        uint64_t val = std::stoull(matches[i].str());
+        base = 10;
+        sub_str_idx = 0;
+
+        if (matches[i].str().length() > 2)
+        {
+            prefix = matches[i].str().substr(0, 2);
+            if (prefix == "0x")
+            {
+                base = 16;
+                sub_str_idx = 2;
+            }
+            else if (prefix == "0b")
+            {
+                base = 2;
+                sub_str_idx = 2;
+            }
+            else if (prefix == "0d")
+            {
+                sub_str_idx = 2;
+            }
+        }
+
+        uint64_t val = std::stoull(matches[i].str().substr(sub_str_idx),
+            nullptr, base);
+
         std::uint32_t bits = selected_template.bits[i - 1];
 
         if ((val & ~(~0x0ull << bits)) != val)
@@ -180,7 +207,8 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
             // Check the next couple characters for non matching-groups
             if (idx + 3 < reg.size() && reg[idx + 1] == '?' && reg[idx + 2] == ':')
             {
-                idx += 3;
+                // Find the closing bracket for this optional group
+                idx = reg.find(')', idx) + 1;
                 continue;
             }
 
@@ -193,8 +221,8 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
             }
         }
 
-        // Skip over ?, ^, $, \, )
-        if (ch == '?' || ch == '^' || ch == '$' || ch == '\\' || ch == ')')
+        // Skip over ?, ^, $, \, ), +, |
+        if (ch == '?' || ch == '^' || ch == '$' || ch == '\\' || ch == ')' || ch == '+' || ch == '|')
         {
             idx++;
             continue;
@@ -233,14 +261,14 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
 void UrlEncoder::AddTemplate(const std::string& new_template, const bool overwrite)
 {
     // The first value must be filled in with their PEN
-    const std::string example = "https://!{www.}!webex.com<int24=777>/meeting<int16>/user<int16>";
+    const std::string example = "https://!{www.}!webex.com<pen=777>/meeting<int16>/user<int16>";
 
     // If there is a !{...}! it is an optional group
     const std::regex optional_regex("!\\{(.+)\\}!");
 
-    const std::regex pen_regex("pen=(\\d+)");
+    const std::regex pen_regex("pen=((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))");
 
-    const std::regex sub_pen_regex("sub_pen=(\\d+)");
+    const std::regex sub_pen_regex("sub_pen=((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))");
 
     // Parse the string
     // Build a regex out of it.. good luck brett
@@ -279,7 +307,30 @@ void UrlEncoder::AddTemplate(const std::string& new_template, const bool overwri
     try
     {
         // Get the pen group value
-        pen_value = std::stoul(matches[1].str());
+
+        std::uint8_t base = 10;
+        std::uint32_t sub_str_idx = 0;
+        if (matches[1].str().length() > 2)
+        {
+            const std::string prefix = matches[1].str().substr(0, 2);
+            if (prefix == "0x")
+            {
+                base = 16;
+                sub_str_idx = 2;
+            }
+            else if (prefix == "0b")
+            {
+                base = 2;
+                sub_str_idx = 2;
+            }
+            else if (prefix == "0d")
+            {
+                sub_str_idx = 2;
+            }
+        }
+
+        pen_value = std::stoul(matches[1].str().substr(sub_str_idx),
+            nullptr, base);
     }
     catch (std::out_of_range& ex)
     {
@@ -363,6 +414,7 @@ void UrlEncoder::AddTemplate(const std::string& new_template, const bool overwri
             start = end + 1;
 
             // Push regex onto the string
+            // TODO add hex
             temp.second.url += ("(\\d+)");
             continue;
         }
