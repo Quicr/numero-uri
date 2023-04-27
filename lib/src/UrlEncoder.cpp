@@ -96,7 +96,7 @@ quicr::Name UrlEncoder::EncodeUrl(const std::string& url) const
         distribution.push_back(bits);
     }
 
-    return quicr::HexEndec<128>::Encode(distribution, values);
+    return quicr::HexEndec<128>::Encode(std::span<uint8_t>(distribution), std::span<uint64_t>(values));
 }
 
 std::string UrlEncoder::DecodeUrl(const quicr::Name& code)
@@ -111,7 +111,7 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
 
     // Assumed that the first 24 and 8 bits are PEN and Sub PEN respectively.
     // Other bits can be ignored for now.
-    const auto& [pen, sub_pen] = quicr::HexEndec<128, Pen_Bits, Sub_Pen_Bits>::Decode(code);
+    const auto& [pen, sub_pen] = quicr::HexEndec<128, Pen_Bits, Sub_Pen_Bits>::Decode(std::string_view(code));
     std::vector<uint8_t> bit_distribution = {Pen_Bits};
 
     // Get the template for that PEN
@@ -131,13 +131,13 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
     bool found_sub_pen = false;
 
     // search for the sub pen
-    if (temp_map.find(-1) != temp_map.end())
+    if (auto found_s_pen = temp_map.find(-1); found_s_pen != temp_map.end())
     {
-        temp = temp_map.at(-1);
+        temp = found_s_pen->second;
     }
-    else if (temp_map.find(sub_pen) != temp_map.end())
+    else if (auto found_s_pen = temp_map.find(sub_pen); found_s_pen != temp_map.end())
     {
-        temp = temp_map.at(sub_pen);
+        temp = found_s_pen->second;
         pen_sub_bits = Sub_Pen_Bits;
         bit_distribution.push_back(pen_sub_bits);
     }
@@ -206,7 +206,7 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
 
     const size_t num_pens = bit_distribution.size();
     bit_distribution.insert(bit_distribution.end(), temp.bits.begin(), temp.bits.end());
-    auto decoded_nums = quicr::HexEndec<128>::Decode(bit_distribution, code);
+    auto decoded_nums = quicr::HexEndec<128>::Decode(bit_distribution, std::string_view(code));
     decoded_nums.erase(decoded_nums.begin(), decoded_nums.begin() + num_pens);
 
     size_t str_offset = 0;
