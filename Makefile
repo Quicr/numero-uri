@@ -25,12 +25,13 @@ build:
 	cmake -B build && cmake --build build
 
 test:
-	cmake -B build -DBUILD_TESTS=ON && cmake --build build \
+	cmake -B build -DBUILD_TESTING=ON -DNUMERO_URI_BUILD_TESTS=ON \
+		&& cmake --build build \
 		&& ctest --test-dir build/tests --output-on-failure
 
 clean:
 	rm -rf build
-	
+
 format:
 	@find lib/inc -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" | xargs ${CLANG_FORMAT}
 	@find lib/src -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" | xargs ${CLANG_FORMAT}
