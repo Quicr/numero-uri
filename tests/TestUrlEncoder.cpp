@@ -51,14 +51,14 @@ TEST_F(TestUrlEncoder, EncodeUse128Bits)
     ASSERT_EQ(encoded, actual);
 }
 
-
 TEST_F(TestUrlEncoder, EncodingOutOfRangeError)
 {
-    EXPECT_THROW({
-        std::string url =
-            "https://webex.com/meeting65536/user3213";
-        quicr::Name encoded = encoder.EncodeUrl(url);
-    }, UrlEncoderOutOfRangeException);
+    EXPECT_THROW(
+        {
+            std::string url = "https://webex.com/meeting65536/user3213";
+            quicr::Name encoded = encoder.EncodeUrl(url);
+        },
+        UrlEncoderOutOfRangeException);
 }
 
 TEST_F(TestUrlEncoder, EncodingNoMatchError)
@@ -83,7 +83,7 @@ TEST_F(TestUrlEncoder, Decode)
 TEST_F(TestUrlEncoder, Decode128bit)
 {
     std::string actual = "https://www.webex.com/party31/building7/floor549755813887/"
-                            "room33554431/meeting4294967295";
+                         "room33554431/meeting4294967295";
     std::string encoded = "0xffffffffffffffffffffffffffffffff";
     std::string decoded = encoder.DecodeUrl(encoded);
     ASSERT_EQ(decoded, actual);
@@ -123,8 +123,11 @@ TEST_F(TestUrlEncoder, AddBigTemplate)
 
     // There should be only 1 template with this PEN so just grab it
     auto output_template = encoder.GetTemplate(16777215).at(-1);
-    std::string actual_url = "^https://(?:www\\.)?webex.com"
-                             "/party(\\d+)/building(\\d+)/floor(\\d+)/room(\\d+)/meeting(\\d+)$";
+    std::string actual_url =
+        "^https://(?:www\\.)?webex.com"
+        "/party((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))/building((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))/"
+        "floor((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))/room((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))/"
+        "meeting((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))$";
     std::vector<uint32_t> actual_bits = {5, 3, 39, 25, 32};
 
     ASSERT_EQ(actual_url, output_template.url);
@@ -168,8 +171,8 @@ TEST_F(TestUrlEncoder, AddJsonOfTemplates)
     temp["pen"] = 777;
 
     json sub_temp;
-    sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting(\\d+)"
-                      "/user(\\d+)/fun(\\d+)$";
+    sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))"
+                      "/user((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))/fun((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))$";
     sub_temp["bits"] = {16, 16, 32};
     sub_temp["sub_pen"] = -1;
 
@@ -181,8 +184,8 @@ TEST_F(TestUrlEncoder, AddJsonOfTemplates)
 
     auto output = encoder.GetTemplate(777).at(-1);
 
-    ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting(\\d+)"
-              "/user(\\d+)/fun(\\d+)$",
+    ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))"
+              "/user((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))/fun((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))$",
               output.url);
     ASSERT_EQ(std::vector<std::uint32_t>({16, 16, 32}), output.bits);
 }
@@ -209,8 +212,8 @@ TEST_F(TestUrlEncoder, TemplatesToJson)
     temp["pen"] = 11259374;
 
     json sub_temp;
-    sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting(\\d+)"
-                      "/user(\\d+)$";
+    sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))"
+                      "/user((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))$";
     sub_temp["bits"] = {16, 16};
     sub_temp["sub_pen"] = -1;
 
@@ -228,8 +231,8 @@ TEST_F(TestUrlEncoder, TemplatesFromJson)
     temp["pen"] = 11259374;
 
     json sub_temp;
-    sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting(\\d+)"
-                      "/user(\\d+)$";
+    sub_temp["url"] = "^https://(?:www\\.)?webex.com/meeting((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))"
+                      "/user((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))$";
     sub_temp["bits"] = {16, 16};
     sub_temp["sub_pen"] = -1;
 
@@ -241,8 +244,8 @@ TEST_F(TestUrlEncoder, TemplatesFromJson)
 
     auto output = encoder.GetTemplate(11259374).at(-1);
 
-    ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting(\\d+)"
-              "/user(\\d+)$",
+    ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))"
+              "/user((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))$",
               output.url);
     ASSERT_EQ(std::vector<std::uint32_t>({16, 16}), output.bits);
 }
@@ -254,7 +257,9 @@ TEST_F(TestUrlEncoder, GetTemplate)
 
     auto output_template = encoder.GetTemplate(23).at(-1);
 
-    ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting(\\d+)/user(\\d+)$", output_template.url);
+    ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))/"
+              "user((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))$",
+              output_template.url);
     ASSERT_EQ(std::vector<std::uint32_t>({16, 16}), output_template.bits);
 }
 
@@ -265,8 +270,8 @@ TEST_F(TestUrlEncoder, GetTemplates)
 
     auto output = encoder.GetTemplate(11259374).at(-1);
 
-    ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting(\\d+)"
-              "/user(\\d+)$",
+    ASSERT_EQ("^https://(?:www\\.)?webex.com/meeting((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))"
+              "/user((?:0x|0d)?(?:[0-9ABCDEFabcdef]+|\\d+))$",
               output.url);
     ASSERT_EQ(std::vector<std::uint32_t>({16, 16}), output.bits);
 }
