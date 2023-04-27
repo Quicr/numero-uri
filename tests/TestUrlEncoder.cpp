@@ -74,7 +74,7 @@ TEST_F(TestUrlEncoder, EncodingNoMatchError)
 
 TEST_F(TestUrlEncoder, Decode)
 {
-    std::string actual = "https://www.webex.com/meeting555/user777";
+    std::string actual = "https://webex.com/meeting555/user777";
     std::string encoded = "0xabcdef022b0309000000000000000000";
     std::string decoded = encoder.DecodeUrl(encoded);
     ASSERT_EQ(decoded, actual);
@@ -82,7 +82,7 @@ TEST_F(TestUrlEncoder, Decode)
 
 TEST_F(TestUrlEncoder, Decode128bit)
 {
-    std::string actual = "https://www.webex.com/party31/building7/floor549755813887/"
+    std::string actual = "https://webex.com/party31/building7/floor549755813887/"
                          "room33554431/meeting4294967295";
     std::string encoded = "0xffffffffffffffffffffffffffffffff";
     std::string decoded = encoder.DecodeUrl(encoded);
