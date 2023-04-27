@@ -30,39 +30,31 @@ UrlEncoder::UrlEncoder(const json& init_templates) : templates()
 
 quicr::Name UrlEncoder::EncodeUrl(const std::string& url) const
 {
-    // To extract the 3 groups from each url format
-    std::smatch matches;
-
-    std::uint64_t pen;
+    std::uint64_t found_pen;
     std::int16_t sub_pen;
     UrlEncoder::url_template selected_template;
     bool found_template = false;
-    for (auto temp_map : templates)
+    for (const auto& [pen, sub_templates] : templates)
     {
         // Find match
-        for (auto url_temp : temp_map.second)
-        {
-            // Set the selected templated to whatever we are looking at
-            selected_template = url_temp.second;
+        const auto& found = std::find_if(sub_templates.begin(), sub_templates.end(), [&](const auto& temp) {
+            return std::regex_match(url, std::regex(temp.second.url));
+        });
 
-            // Check if this template matches our url
-            if (!std::regex_match(url, std::regex(selected_template.url)))
-                continue;
+        if (found == sub_templates.end())
+            continue;
 
-            // Set the PEN to the matched template PEN
-            pen = temp_map.first;
-            sub_pen = url_temp.first;
-            found_template = true;
-            break;
-        }
-
-        // Found the template break out of the loop
-        if (found_template)
-            break;
+        found_pen = pen;
+        std::tie(sub_pen, selected_template) = *found;
+        found_template = true;
+        break;
     }
 
     if (!found_template)
         throw UrlEncoderNoMatchException("Error. No match found for given url: " + url);
+
+    // To extract the 3 groups from each url format
+    std::smatch matches;
 
     // If there is not a match then there is no template for this PEN
     if (!std::regex_match(url, matches, std::regex(selected_template.url)))
@@ -75,7 +67,7 @@ quicr::Name UrlEncoder::EncodeUrl(const std::string& url) const
 
     std::vector<uint64_t> values;
     std::vector<uint8_t> distribution;
-    values.push_back(pen);
+    values.push_back(found_pen);
     distribution.push_back(Pen_Bits);
 
     // Set the sub PEN value and bits if it is positive
@@ -86,44 +78,18 @@ quicr::Name UrlEncoder::EncodeUrl(const std::string& url) const
     }
 
     // Skip the first group since its the whole match
-    std::string prefix;
-    std::uint16_t base;
-    std::uint32_t sub_str_idx;
+    std::string_view match;
     for (std::uint32_t i = 1; i < matches.size(); i++)
     {
-        base = 10;
-        sub_str_idx = 0;
-
-        if (matches[i].str().length() > 2)
-        {
-            prefix = matches[i].str().substr(0, 2);
-            if (prefix == "0x")
-            {
-                base = 16;
-                sub_str_idx = 2;
-            }
-            else if (prefix == "0b")
-            {
-                base = 2;
-                sub_str_idx = 2;
-            }
-            else if (prefix == "0d")
-            {
-                sub_str_idx = 2;
-            }
-        }
-
-        uint64_t val = std::stoull(matches[i].str().substr(sub_str_idx),
-            nullptr, base);
-
+        match = matches[i].str();
+        std::uint16_t base = match.starts_with("0x") ? 16 : match.starts_with("0b") ? 2 : 10;
+        std::uint64_t val = std::stoull(match.data(), nullptr, base);
         std::uint32_t bits = selected_template.bits[i - 1];
-
         if ((val & ~(~0x0ull << bits)) != val)
         {
-            throw UrlEncoderOutOfRangeException(
-                "Error. Out of range. Group " + std::to_string(i)
-                + " value is " + std::to_string(val)
-                + " which exceeds the maximum amount of bits: " + std::to_string(bits));
+            throw UrlEncoderOutOfRangeException("Error. Out of range. Group " + std::to_string(i) + " value is " +
+                                                std::to_string(val) +
+                                                " which exceeds the maximum amount of bits: " + std::to_string(bits));
         }
 
         values.push_back(val);
@@ -148,12 +114,17 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
     const auto& [pen, sub_pen] = quicr::HexEndec<128, Pen_Bits, Sub_Pen_Bits>::Decode(code);
     std::vector<uint8_t> bit_distribution = {Pen_Bits};
 
-    // Check if pen exists in list of templates
-    if (templates.find(pen) == templates.end())
-        throw UrlDecodeNoMatchException("Error. No templates matches the found PEN " + std::to_string(pen));
-
     // Get the template for that PEN
-    auto temp_map = templates.at(pen);
+    UrlEncoder::template_map temp_map;
+    try
+    {
+        temp_map = templates.at(pen);
+    }
+    catch (const std::out_of_range&)
+    {
+        throw UrlDecodeNoMatchException("Error. No templates matches the found PEN " + std::to_string(pen));
+    }
+
     UrlEncoder::url_template temp;
 
     // Search for this sub PEN
@@ -204,15 +175,16 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
         // Find groups and make note of them
         if (ch == '(')
         {
+
+            find = reg.find(')', idx);
             // Check the next couple characters for non matching-groups
             if (idx + 3 < reg.size() && reg[idx + 1] == '?' && reg[idx + 2] == ':')
             {
                 // Find the closing bracket for this optional group
-                idx = reg.find(')', idx) + 1;
+                idx = find + 1;
                 continue;
             }
 
-            find = reg.find(')', idx);
             if (find != std::string::npos)
             {
                 group_indices.push_back(decoded.length());
@@ -224,7 +196,7 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
         // Skip over ?, ^, $, \, ), +, |
         if (ch == '?' || ch == '^' || ch == '$' || ch == '\\' || ch == ')' || ch == '+' || ch == '|')
         {
-            idx++;
+            ++idx;
             continue;
         }
 
@@ -307,30 +279,10 @@ void UrlEncoder::AddTemplate(const std::string& new_template, const bool overwri
     try
     {
         // Get the pen group value
-
-        std::uint8_t base = 10;
-        std::uint32_t sub_str_idx = 0;
-        if (matches[1].str().length() > 2)
-        {
-            const std::string prefix = matches[1].str().substr(0, 2);
-            if (prefix == "0x")
-            {
-                base = 16;
-                sub_str_idx = 2;
-            }
-            else if (prefix == "0b")
-            {
-                base = 2;
-                sub_str_idx = 2;
-            }
-            else if (prefix == "0d")
-            {
-                sub_str_idx = 2;
-            }
-        }
-
-        pen_value = std::stoul(matches[1].str().substr(sub_str_idx),
-            nullptr, base);
+        std::string_view match;
+        match = matches[1].str();
+        std::uint16_t base = match.starts_with("0x") ? 16 : match.starts_with("0b") ? 2 : 10;
+        pen_value = std::stoul(match.data(), nullptr, base);
     }
     catch (std::out_of_range& ex)
     {
