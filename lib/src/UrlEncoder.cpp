@@ -4,6 +4,8 @@
 #include <iostream>
 #include <regex>
 
+constexpr size_t MaxEncodeSize = 128;
+
 UrlEncoder::UrlEncoder() : templates()
 {
 }
@@ -69,12 +71,14 @@ quicr::Name UrlEncoder::EncodeUrl(const std::string& url) const
     std::vector<uint8_t> distribution;
     values.push_back(found_pen);
     distribution.push_back(Pen_Bits);
+    int remaining_bits = MaxEncodeSize - Pen_Bits;
 
     // Set the sub PEN value and bits if it is positive
     if (sub_pen >= 0)
     {
         values.push_back(sub_pen);
         distribution.push_back(Sub_Pen_Bits);
+        remaining_bits -= Sub_Pen_Bits;
     }
 
     // Skip the first group since its the whole match
@@ -94,9 +98,16 @@ quicr::Name UrlEncoder::EncodeUrl(const std::string& url) const
 
         values.push_back(val);
         distribution.push_back(bits);
+        remaining_bits -= bits;
     }
 
-    return quicr::HexEndec<128>::Encode(std::span<uint8_t>(distribution), std::span<uint64_t>(values));
+    if (remaining_bits > 0)
+    {
+        values.push_back(0);
+        distribution.push_back(remaining_bits);
+    }
+
+    return quicr::HexEndec<MaxEncodeSize>::Encode(std::span<uint8_t>(distribution), std::span<uint64_t>(values));
 }
 
 std::string UrlEncoder::DecodeUrl(const quicr::Name& code)
@@ -111,7 +122,7 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
 
     // Assumed that the first 24 and 8 bits are PEN and Sub PEN respectively.
     // Other bits can be ignored for now.
-    const auto& [pen, sub_pen] = quicr::HexEndec<128, Pen_Bits, Sub_Pen_Bits>::Decode(std::string_view(code));
+    const auto& [pen, sub_pen] = quicr::HexEndec<MaxEncodeSize, Pen_Bits, Sub_Pen_Bits>::Decode(std::string_view(code));
     std::vector<uint8_t> bit_distribution = {Pen_Bits};
 
     // Get the template for that PEN
@@ -206,8 +217,7 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
 
     const size_t num_pens = bit_distribution.size();
     bit_distribution.insert(bit_distribution.end(), temp.bits.begin(), temp.bits.end());
-    auto decoded_nums = quicr::HexEndec<128>::Decode(bit_distribution, std::string_view(code));
-    decoded_nums.erase(decoded_nums.begin(), decoded_nums.begin() + num_pens);
+    auto decoded_nums = quicr::HexEndec<MaxEncodeSize>::Decode(bit_distribution, std::string_view(code));
 
     size_t str_offset = 0;
     size_t insert_idx;
@@ -221,7 +231,7 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
         insert_idx = group_indices[i] + str_offset;
 
         // Get the bits converted into decimal
-        insert_str = std::to_string(decoded_nums[i]);
+        insert_str = std::to_string(decoded_nums[i + num_pens]);
 
         // Insert the numeric values into the decoded string
         decoded.insert(insert_idx, insert_str);
