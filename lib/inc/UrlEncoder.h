@@ -388,6 +388,21 @@ class UrlEncoder
      */
     const template_map& GetTemplate(std::uint64_t pen) const;
 
+    /*
+     *  UrlEncoder::GetTemplate
+     *
+     *  Description:
+     *      Gets the number of templates loaded in the encoder
+     *
+     *  Parameters:
+     *      count_sub_pen [in]
+     *          boolean to enable counting of sub-pen templates
+     *
+     *  Returns:
+     *      std::uint64_t - Number of templates loaded in the encoder
+     *
+     *  Comments:
+     */
     const std::uint64_t TemplateCount(const bool count_sub_pen = true) const;
 
   private:

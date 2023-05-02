@@ -25,6 +25,9 @@ class TestUrlEncoder : public ::testing::Test
         encoder.AddTemplate(std::string("https://!{www.}!webex.com"
                                         "<pen=16777215>/party<int5>/building<int3>/floor<int39>"
                                         "/room<int25>/meeting<int32>"));
+        encoder.AddTemplate(std::string("quicr://webex.cisco.com"
+                                        "<pen=10>/conference/<int32>/mediaType/"
+                                        "<int32>/endpoint/<int32>"));
     }
 
     ~TestUrlEncoder() = default;
@@ -38,6 +41,12 @@ TEST_F(TestUrlEncoder, Encode)
 
     quicr::Name encoded = encoder.EncodeUrl(url);
     std::string actual = "0xabcdef04d20c8d000000000000000000";
+    ASSERT_EQ(encoded, actual);
+
+    url = "quicr://webex.cisco.com/conference/1/mediaType/129/endpoint/4";
+
+    encoded = encoder.EncodeUrl(url);
+    actual = "0x00000A00000001000000810000000400";
     ASSERT_EQ(encoded, actual);
 }
 
@@ -78,6 +87,11 @@ TEST_F(TestUrlEncoder, Decode)
     std::string encoded = "0xabcdef022b0309000000000000000000";
     std::string decoded = encoder.DecodeUrl(encoded);
     ASSERT_EQ(decoded, actual);
+
+    actual = "quicr://webex.cisco.com/conference/1/mediaType/129/endpoint/4";
+    encoded = "0x00000A00000001000000810000000400";
+    decoded = encoder.DecodeUrl(encoded);
+    ASSERT_EQ(decoded, actual);
 }
 
 TEST_F(TestUrlEncoder, Decode128bit)
@@ -107,12 +121,10 @@ TEST_F(TestUrlEncoder, DecodingErrors)
 
 TEST_F(TestUrlEncoder, AddTemplate)
 {
+    auto current_size = encoder.GetTemplates().size();
     encoder.AddTemplate(std::string("https://!{www.}!webex.com/"
                                     "<pen=11259376>/meeting<int16>/user<int16>"));
-
-    // Since we already have 3 templates from the constructor we are only
-    // adding 1 extra.
-    ASSERT_EQ(4, encoder.GetTemplates().size());
+    ASSERT_EQ(current_size + 1, encoder.GetTemplates().size());
 }
 
 TEST_F(TestUrlEncoder, AddBigTemplate)
@@ -278,13 +290,13 @@ TEST_F(TestUrlEncoder, GetTemplates)
 
 TEST_F(TestUrlEncoder, TemplateCount)
 {
-    ASSERT_EQ(encoder.TemplateCount(false), 3);
-    ASSERT_EQ(encoder.TemplateCount(true), 3);
+    ASSERT_EQ(encoder.TemplateCount(false), 4);
+    ASSERT_EQ(encoder.TemplateCount(true), 4);
 
     encoder.AddTemplate(std::string("https://!{www.}!webex.com"
                                     "<pen=11259374>Cookie/meeting<int16>/user<int16>"));
 
-    ASSERT_EQ(encoder.TemplateCount(true), 4);
+    ASSERT_EQ(encoder.TemplateCount(true), 5);
 }
 
 TEST_F(TestUrlEncoder, Clear)
