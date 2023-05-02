@@ -24,11 +24,11 @@ TEST(TestUrlEncoderPerformance, OnlyPEN)
                                     "<int16>/chat<int16>/user<int16>/clan<int16>"));
 
     // Test with just PENs
-    auto start = std::chrono::steady_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
     auto encoded = encoder.EncodeUrl("https://webex.com/meeting1/chat1/user1/clan1");
 
-    auto end = std::chrono::steady_clock::now();
+    auto end = std::chrono::high_resolution_clock::now();
     auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     std::cout << "[UrlEncoder] Result: " << encoded.to_hex() << "\n";
@@ -58,11 +58,11 @@ TEST(TestUrlEncoderPerformance, OnlySubPEN)
                                     "guild<int16>"));
 
     // Test with just PENs
-    auto start = std::chrono::steady_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
     auto encoded = encoder.EncodeUrl("https://webex.com/meeting1/chat1/user1/guild1");
 
-    auto end = std::chrono::steady_clock::now();
+    auto end = std::chrono::high_resolution_clock::now();
     auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     std::cout << "[UrlEncoder] Result: " << encoded.to_hex() << "\n";
@@ -98,11 +98,11 @@ TEST(TestUrlEncoderPerformance, FullPerformance)
                                     "guild<int16>"));
 
     // Test with just PENs
-    auto start = std::chrono::steady_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
     auto encoded = encoder.EncodeUrl("https://webex.com/meeting1/chat1/user1/guild1");
 
-    auto end = std::chrono::steady_clock::now();
+    auto end = std::chrono::high_resolution_clock::now();
     auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     std::cout << "[UrlEncoder] Result: " << encoded.to_hex() << "\n";
