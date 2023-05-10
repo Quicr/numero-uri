@@ -7,6 +7,9 @@ CLANG_FORMAT=clang-format -i
 
 all: docker
 
+cmake:
+	cmake -B build && cmake --build build
+
 # TODO make a first run command? or if the cmd is provided to rebuild it
 docker:
 	@docker build -t numero_uri --target ${cmd} .
