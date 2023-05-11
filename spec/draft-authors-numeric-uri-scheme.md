@@ -18,16 +18,16 @@ informative:
 --- abstract
 
 TODO: Introduce 
-* explain how this creates a set of schema's for URLs, and if the a URL matches the template, then it can be compressed in a way described in this specification. 
+* explain how this creates a set of schema for URLs, and if the a URL matches the template, then it can be compressed in a way described in this specification. 
 
 --- middle
 
 # Introduction
 
 TODO Add Motivation and introdcuce the scheme
-* explain many applcitions that use rest have URL that follow very specific patters
-* much of the entroypy of thses patters can be compressed out 
-* allows better compression and faster processing in binary that string form 
+* explain many applications that use REST have URL that follow very specific pattern
+* much of the entropy of these patterns can be compressed out
+* allows better compression and faster processing in binary than string form 
 * not meant for generic web URLs 
 * example of a webex style meeting url 
 * solution is schema driven compression 
@@ -39,14 +39,14 @@ TODO Add Motivation and introdcuce the scheme
 # Numeric URIs
 
 TODO Define Scheme and Templating mechanisms
-* not all URIs can be numberic URI. Genrally numeric URI are designed to work this way
-* Formatly definition of the schema syntax and legal schemes 
-* Formatl defintition of how to take a URI and see if it matches a given schema
+* not all URIs can be numberic URI. Generally numeric URI are designed to work this way
+* Formal definition of the schema syntax and legal schemes 
+* Formal defintition of how to take a URI and see if it matches a given schema
 * Given URI and matching schema, explain how to compress this into an integer 
 
 ## Examples
 
-TODO - add five schema examples that range from simple to complex and illistrate the range of functionality 
+TODO - add five schema examples that range from simple to complex and illustrate the range of functionality 
 
 ## Applicability and Limitations
 
