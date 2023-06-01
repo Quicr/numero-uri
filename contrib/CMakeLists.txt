@@ -16,8 +16,6 @@ if (GIT_SUBMODULE)
     if (NOT SUBMOD_RES EQUAL "0")
         message(FATAL_ERROR "git submodule update --init --recursive failed with ${SUBMOD_RES}, please checkout submodules")
     endif()
-    add_subdirectory(json)
-    add_subdirectory(libquicr)
 
     # googletests library
     if (BUILD_TESTING AND NUMERO_URI_BUILD_TESTS)
