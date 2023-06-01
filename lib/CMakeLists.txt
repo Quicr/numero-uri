@@ -6,8 +6,7 @@ set_target_properties(numero_uri_lib PROPERTIES ARCHIVE_OUTPUT_DIRECTORY
 
 target_link_libraries(numero_uri_lib 
     PUBLIC
-        nlohmann_json
         quicr
 )
 
-target_include_directories(numero_uri_lib PUBLIC ${PROJECT_BINARY_DIR} inc "../../libquicr/include")
+target_include_directories(numero_uri_lib PUBLIC ${PROJECT_BINARY_DIR} inc "../../libquicr/include/" "../../json/include/")

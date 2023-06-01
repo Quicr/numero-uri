@@ -106,8 +106,8 @@ quicr::Name UrlEncoder::EncodeUrl(const std::string& url) const
         values.push_back(0);
         distribution.push_back(remaining_bits);
     }
-
-    return quicr::HexEndec<MaxEncodeSize>::Encode(std::span<uint8_t>(distribution), std::span<uint64_t>(values));
+    std::string hex = quicr::HexEndec<MaxEncodeSize>::Encode(distribution, values);
+    return quicr::Name(hex); 
 }
 
 std::string UrlEncoder::DecodeUrl(const quicr::Name& code)
