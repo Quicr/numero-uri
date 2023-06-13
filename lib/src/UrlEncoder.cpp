@@ -30,7 +30,7 @@ UrlEncoder::UrlEncoder(const json& init_templates) : templates()
     AddTemplate(init_templates);
 }
 
-quicr::Name UrlEncoder::EncodeUrl(const std::string& url) const
+quicr::Namespace UrlEncoder::EncodeUrl(const std::string& url) const
 {
     std::uint64_t found_pen;
     std::int16_t sub_pen;
@@ -106,11 +106,11 @@ quicr::Name UrlEncoder::EncodeUrl(const std::string& url) const
         values.push_back(0);
         distribution.push_back(remaining_bits);
     }
-
-    return quicr::HexEndec<MaxEncodeSize>::Encode(std::span<uint8_t>(distribution), std::span<uint64_t>(values));
+    quicr::Name name = {quicr::HexEndec<MaxEncodeSize>::Encode(distribution, values)};
+    return quicr::Namespace(name, MaxEncodeSize - remaining_bits); 
 }
 
-std::string UrlEncoder::DecodeUrl(const quicr::Name& code)
+std::string UrlEncoder::DecodeUrl(const quicr::Namespace& code)
 {
     return DecodeUrl(code.to_hex());
 }
@@ -122,7 +122,10 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
 
     // Assumed that the first 24 and 8 bits are PEN and Sub PEN respectively.
     // Other bits can be ignored for now.
-    const auto& [pen, sub_pen] = quicr::HexEndec<MaxEncodeSize, Pen_Bits, Sub_Pen_Bits>::Decode(std::string_view(code));
+    int offset = code.find("/");
+    std::string namePart = code.substr(0,offset);
+    std::string bitsPart = code.substr(offset+1, code.size() - offset);
+    const auto& [pen, sub_pen] = quicr::HexEndec<MaxEncodeSize, Pen_Bits, Sub_Pen_Bits>::Decode(namePart);
     std::vector<uint8_t> bit_distribution = {Pen_Bits};
 
     // Get the template for that PEN
@@ -536,7 +539,7 @@ const UrlEncoder::template_map& UrlEncoder::GetTemplate(std::uint64_t pen) const
     return templates.at(pen);
 }
 
-const std::uint64_t UrlEncoder::TemplateCount(const bool count_sub_pen) const
+ std::uint64_t UrlEncoder::TemplateCount(const bool count_sub_pen) const
 {
     if (!count_sub_pen)
     {
