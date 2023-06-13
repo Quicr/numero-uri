@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <quicr/quicr_name.h>
+#include <quicr/quicr_namespace.h>
 
 #include <map>
 #include <regex>
@@ -166,7 +166,7 @@ class UrlEncoder
      *  Comments:
      *      Note: To add a new template see UrlEncoder::AddTemplate
      */
-    quicr::Name EncodeUrl(const std::string& url) const;
+    quicr::Namespace EncodeUrl(const std::string& url) const;
 
     /*
      *  UrlEncoder::DecodeUrl
@@ -190,7 +190,7 @@ class UrlEncoder
      *  Comments:
      *      Note: rep can be sym, hex, dec, bin.
      */
-    std::string DecodeUrl(const quicr::Name& code);
+    std::string DecodeUrl(const quicr::Namespace& code);
     std::string DecodeUrl(const std::string& code);
 
     /*
@@ -388,7 +388,7 @@ class UrlEncoder
      */
     const template_map& GetTemplate(std::uint64_t pen) const;
 
-    const std::uint64_t TemplateCount(const bool count_sub_pen = true) const;
+    std::uint64_t TemplateCount(const bool count_sub_pen = true) const;
 
   private:
     /*
