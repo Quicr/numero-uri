@@ -32,7 +32,7 @@ int main(int argc, char** argv) try
     if (strcmp(argv[1], "encode") == 0)
     {
         // encode test - https://webex.com/1/meeting1234/user3213
-        quicr::Name encoded = encoder.EncodeUrl(argv[2]);
+        quicr::Namespace encoded = encoder.EncodeUrl(argv[2]);
         std::cout << encoded.to_hex() << "\n";
     }
     else if (strcmp(argv[1], "decode") == 0)
