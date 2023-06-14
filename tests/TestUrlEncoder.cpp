@@ -36,9 +36,9 @@ TEST_F(TestUrlEncoder, Encode)
 {
     std::string url = "https://www.webex.com/meeting1234/user3213";
 
-    quicr::Name encoded = encoder.EncodeUrl(url);
-    std::string actual = "0xabcdef04d20c8d000000000000000000";
-    ASSERT_EQ(encoded, actual);
+    quicr::Namespace encoded = encoder.EncodeUrl(url);
+    quicr::Name actual = quicr::Name("0xabcdef04d20c8d000000000000000000");
+    ASSERT_TRUE(encoded.contains(actual));
 }
 
 TEST_F(TestUrlEncoder, EncodeUse128Bits)
@@ -46,9 +46,9 @@ TEST_F(TestUrlEncoder, EncodeUse128Bits)
     std::string url = "https://www.webex.com/party31/building7/"
                       "floor549755813887/room33554431/meeting4294967295";
 
-    quicr::Name encoded = encoder.EncodeUrl(url);
-    std::string actual = "0xffffffffffffffffffffffffffffffff";
-    ASSERT_EQ(encoded, actual);
+    quicr::Namespace encoded = encoder.EncodeUrl(url);
+    quicr::Name actual = quicr::Name("0xffffffffffffffffffffffffffffffff");
+    ASSERT_TRUE(encoded.contains(actual));
 }
 
 TEST_F(TestUrlEncoder, EncodingOutOfRangeError)
@@ -56,7 +56,7 @@ TEST_F(TestUrlEncoder, EncodingOutOfRangeError)
     EXPECT_THROW(
         {
             std::string url = "https://webex.com/meeting65536/user3213";
-            quicr::Name encoded = encoder.EncodeUrl(url);
+            quicr::Namespace encoded = encoder.EncodeUrl(url);
         },
         UrlEncoderOutOfRangeException);
 }
@@ -67,7 +67,7 @@ TEST_F(TestUrlEncoder, EncodingNoMatchError)
         {
             std::string url = "https://webex.com/3232/test_meeting2132/"
                               "user3213";
-            quicr::Name encoded = encoder.EncodeUrl(url);
+            quicr::Namespace encoded = encoder.EncodeUrl(url);
         },
         UrlEncoderNoMatchException);
 }
@@ -97,7 +97,7 @@ TEST_F(TestUrlEncoder, DecodingErrors)
                                             "meeting<int16>/user<int16>"));
             std::string url = "https://webex.com/meeting1234/user3213";
 
-            quicr::Name encoded = encoder.EncodeUrl(url);
+            quicr::Namespace encoded = encoder.EncodeUrl(url);
 
             encoder.RemoveTemplate(2);
             std::string decoded = encoder.DecodeUrl(encoded);
