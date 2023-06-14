@@ -7,12 +7,11 @@ set(CMAKE_C_STANDARD 99)
 
 option(NUMERO_URI_BUILD_TESTS "build the tests" OFF)
 
-# Add subdirectory goes into the directory and looks for a cmakelists file
 add_subdirectory(contrib)
 add_subdirectory(lib)
-add_subdirectory(cli)
 
 if (BUILD_TESTING AND NUMERO_URI_BUILD_TESTS)
+    add_subdirectory(cli)
     enable_testing()
     add_subdirectory(tests)
 endif()
