@@ -1,8 +1,8 @@
 if (NOT TARGET nlohmann_json)
     add_subdirectory(json)
 endif()
-if (NOT TARGET quicr)
-    add_subdirectory(libquicr)
+if (NOT TARGET qname)
+    add_subdirectory(qname)
 endif()
 
 if (BUILD_TESTING AND NUMERO_URI_BUILD_TESTS)

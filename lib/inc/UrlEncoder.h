@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <quicr/quicr_namespace.h>
+#include <quicr/namespace.h>
 
 #include <map>
 #include <regex>

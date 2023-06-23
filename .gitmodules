@@ -7,3 +7,6 @@
 [submodule "contrib/libquicr"]
 	path = contrib/libquicr
 	url = git@github.com:Quicr/libquicr.git
+[submodule "contrib/qname"]
+	path = contrib/qname
+	url = https://github.com/quicr/qname
