@@ -107,7 +107,7 @@ quicr::Namespace UrlEncoder::EncodeUrl(const std::string& url) const
         distribution.push_back(remaining_bits);
     }
     quicr::Name name = {quicr::HexEndec<MaxEncodeSize>::Encode(distribution, values)};
-    return quicr::Namespace(name, MaxEncodeSize - remaining_bits); 
+    return quicr::Namespace(name, MaxEncodeSize - remaining_bits);
 }
 
 std::string UrlEncoder::DecodeUrl(const quicr::Namespace& code)
