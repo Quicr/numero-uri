@@ -20,6 +20,7 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <nlohmann/json.hpp>
@@ -178,8 +179,8 @@ class UrlEncoder
      * Hexadecimal - 0xF123 | Binary - 0b0101 | Decimal - 0d1232
      *
      *  Parameters:
-     *      code_str [in]
-     *          A string of an encoded url
+     *      code [in]
+     *          A string or namespace of an encoded url
      *      rep [in]
      *          The number format representation that the string is
      *          - Default = big_uint::Representation::sym - implies the number
@@ -191,7 +192,6 @@ class UrlEncoder
      *      Note: rep can be sym, hex, dec, bin.
      */
     std::string DecodeUrl(const quicr::Namespace& code);
-    std::string DecodeUrl(const std::string& code);
 
     /*
      *  UrlEncoder::AddTemplate

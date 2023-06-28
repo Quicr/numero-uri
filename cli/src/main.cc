@@ -1,6 +1,6 @@
-#include <UrlEncoder.h>
 #include "ConfigurationManager.hh"
 #include "TemplateFileManager.hh"
+#include <UrlEncoder.h>
 
 #include <nlohmann/json.hpp>
 
@@ -9,9 +9,11 @@
 
 using json = nlohmann::json;
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
+try
 {
-    // json d = TemplateFileManager::LoadTemplatesFromHttp("https://raw.githubusercontent.com/BrettRegnier/delete_me/main/templates.json");
+    // json d =
+    // TemplateFileManager::LoadTemplatesFromHttp("https://raw.githubusercontent.com/BrettRegnier/delete_me/main/templates.json");
     // std::cout << std::setw(4) << d << std::endl;
     if (argc == 1)
     {
@@ -33,12 +35,12 @@ int main(int argc, char** argv) try
     {
         // encode test - https://webex.com/1/meeting1234/user3213
         quicr::Namespace encoded = encoder.EncodeUrl(argv[2]);
-        std::cout << encoded.to_hex() << "\n";
+        std::cout << encoded << "\n";
     }
     else if (strcmp(argv[1], "decode") == 0)
     {
-        //decode test - 0000000112021553484800000000000000000000
-        std::string decoded = encoder.DecodeUrl(argv[2]);
+        // decode test - 0000000112021553484800000000000000000000
+        std::string decoded = encoder.DecodeUrl(std::string_view(argv[2]));
         std::cout << decoded << "\n";
     }
     else if (strcmp(argv[1], "template-file") == 0)
@@ -72,8 +74,7 @@ int main(int argc, char** argv) try
             throw UrlEncoderException("Failed to remove template from list");
 
         // Save the template file
-        TemplateFileManager::SaveTemplates(template_file,
-                                            encoder.TemplatesToJson());
+        TemplateFileManager::SaveTemplates(template_file, encoder.TemplatesToJson());
         std::cout << "Template with PEN " << pen << " has been removed.\n";
     }
     else if (strcmp(argv[1], "show-templates") == 0)
@@ -89,11 +90,11 @@ int main(int argc, char** argv) try
 
     return 0;
 }
-catch (const std::invalid_argument &ex)
+catch (const std::invalid_argument& ex)
 {
     std::cout << ex.what() << std::endl;
 }
-catch (const std::runtime_error &ex)
+catch (const std::runtime_error& ex)
 {
     std::cout << ex.what() << std::endl;
 }

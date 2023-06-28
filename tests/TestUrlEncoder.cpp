@@ -37,7 +37,7 @@ TEST_F(TestUrlEncoder, Encode)
     std::string url = "https://www.webex.com/meeting1234/user3213";
 
     quicr::Namespace encoded = encoder.EncodeUrl(url);
-    quicr::Name actual = quicr::Name("0xabcdef04d20c8d000000000000000000");
+    quicr::Name actual = 0xABCDEF04D20C8D000000000000000000_name;
     ASSERT_TRUE(encoded.contains(actual));
 }
 
@@ -47,7 +47,7 @@ TEST_F(TestUrlEncoder, EncodeUse128Bits)
                       "floor549755813887/room33554431/meeting4294967295";
 
     quicr::Namespace encoded = encoder.EncodeUrl(url);
-    quicr::Name actual = quicr::Name("0xffffffffffffffffffffffffffffffff");
+    quicr::Name actual = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF_name;
     ASSERT_TRUE(encoded.contains(actual));
 }
 
@@ -75,7 +75,7 @@ TEST_F(TestUrlEncoder, EncodingNoMatchError)
 TEST_F(TestUrlEncoder, Decode)
 {
     std::string actual = "https://webex.com/meeting555/user777";
-    std::string encoded = "0xabcdef022b0309000000000000000000";
+    std::string encoded = "0xABCDEF022B0309000000000000000000/56";
     std::string decoded = encoder.DecodeUrl(encoded);
     ASSERT_EQ(decoded, actual);
 }
@@ -84,7 +84,7 @@ TEST_F(TestUrlEncoder, Decode128bit)
 {
     std::string actual = "https://webex.com/party31/building7/floor549755813887/"
                          "room33554431/meeting4294967295";
-    std::string encoded = "0xffffffffffffffffffffffffffffffff";
+    std::string encoded = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF/128";
     std::string decoded = encoder.DecodeUrl(encoded);
     ASSERT_EQ(decoded, actual);
 }
