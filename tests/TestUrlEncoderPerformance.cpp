@@ -31,7 +31,7 @@ TEST(TestUrlEncoderPerformance, OnlyPEN)
     auto end = std::chrono::high_resolution_clock::now();
     auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    std::cout << "[UrlEncoder] Result: " << encoded.to_hex() << "\n";
+    std::cout << "[UrlEncoder] Result: " << encoded << "\n";
     std::cout << "[UrlEncoder] Elapsed encoding time: " << res << "ms\n";
 
     std::cout << "[UrlEncoder] Finish OnlyPEN performance test\n\n";
@@ -65,7 +65,7 @@ TEST(TestUrlEncoderPerformance, OnlySubPEN)
     auto end = std::chrono::high_resolution_clock::now();
     auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    std::cout << "[UrlEncoder] Result: " << encoded.to_hex() << "\n";
+    std::cout << "[UrlEncoder] Result: " << encoded << "\n";
     std::cout << "[UrlEncoder] Elapsed encoding time: " << res << "ms\n";
 
     std::cout << "[UrlEncoder] Finish OnlySubPEN performance test\n\n";
@@ -105,7 +105,7 @@ TEST(TestUrlEncoderPerformance, FullPerformance)
     auto end = std::chrono::high_resolution_clock::now();
     auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    std::cout << "[UrlEncoder] Result: " << encoded.to_hex() << "\n";
+    std::cout << "[UrlEncoder] Result: " << encoded << "\n";
     std::cout << "[UrlEncoder] Elapsed encoding time: " << res << "ms\n";
 
     std::cout << "[UrlEncoder] Finish Full Performance test\n\n";

@@ -1,10 +1,11 @@
 #include <UrlEncoder.h>
+
 #include <quicr/hex_endec.h>
 
 #include <iostream>
 #include <regex>
 
-constexpr size_t MaxEncodeSize = 128;
+constexpr size_t MaxEncodeSize = sizeof(quicr::Name) * 8;
 
 UrlEncoder::UrlEncoder() : templates()
 {
@@ -68,7 +69,7 @@ quicr::Namespace UrlEncoder::EncodeUrl(const std::string& url) const
                                          "the given template");
 
     std::vector<uint64_t> values;
-    std::vector<uint8_t> distribution;
+    std::vector<uint16_t> distribution;
     values.push_back(found_pen);
     distribution.push_back(Pen_Bits);
     int remaining_bits = MaxEncodeSize - Pen_Bits;
@@ -112,32 +113,20 @@ quicr::Namespace UrlEncoder::EncodeUrl(const std::string& url) const
 
 std::string UrlEncoder::DecodeUrl(const quicr::Namespace& code)
 {
-    return DecodeUrl(code.to_hex());
-}
-
-std::string UrlEncoder::DecodeUrl(const std::string& code)
-{
     // If the sub pen is not used then we use 0 bits on it
     std::uint32_t pen_sub_bits = 0;
 
     // Assumed that the first 24 and 8 bits are PEN and Sub PEN respectively.
     // Other bits can be ignored for now.
-    int offset = code.find("/");
-    std::string namePart = code.substr(0,offset);
-    std::string bitsPart = code.substr(offset+1, code.size() - offset);
-    const auto& [pen, sub_pen] = quicr::HexEndec<MaxEncodeSize, Pen_Bits, Sub_Pen_Bits>::Decode(namePart);
-    std::vector<uint8_t> bit_distribution = {Pen_Bits};
+    const auto& [pen, sub_pen] = quicr::HexEndec<MaxEncodeSize, Pen_Bits, Sub_Pen_Bits>::Decode(code);
+    std::vector<uint16_t> bit_distribution = {Pen_Bits};
 
     // Get the template for that PEN
-    UrlEncoder::template_map temp_map;
-    try
-    {
-        temp_map = templates.at(pen);
-    }
-    catch (const std::out_of_range&)
-    {
+    auto found = templates.find(pen);
+    if (found == templates.end())
         throw UrlDecodeNoMatchException("Error. No templates matches the found PEN " + std::to_string(pen));
-    }
+
+    UrlEncoder::template_map temp_map = found->second;
 
     UrlEncoder::url_template temp;
 
@@ -220,7 +209,7 @@ std::string UrlEncoder::DecodeUrl(const std::string& code)
 
     const size_t num_pens = bit_distribution.size();
     bit_distribution.insert(bit_distribution.end(), temp.bits.begin(), temp.bits.end());
-    auto decoded_nums = quicr::HexEndec<MaxEncodeSize>::Decode(bit_distribution, std::string_view(code));
+    auto decoded_nums = quicr::HexEndec<MaxEncodeSize>::Decode(bit_distribution, code);
 
     size_t str_offset = 0;
     size_t insert_idx;
@@ -539,7 +528,7 @@ const UrlEncoder::template_map& UrlEncoder::GetTemplate(std::uint64_t pen) const
     return templates.at(pen);
 }
 
- std::uint64_t UrlEncoder::TemplateCount(const bool count_sub_pen) const
+std::uint64_t UrlEncoder::TemplateCount(const bool count_sub_pen) const
 {
     if (!count_sub_pen)
     {
