@@ -83,12 +83,11 @@ quicr::Namespace UrlEncoder::EncodeUrl(const std::string& url) const
     }
 
     // Skip the first group since its the whole match
-    std::string_view match;
     for (std::uint32_t i = 1; i < matches.size(); i++)
     {
-        match = matches[i].str();
-        std::uint16_t base = match.starts_with("0x") ? 16 : match.starts_with("0b") ? 2 : 10;
-        std::uint64_t val = std::stoull(match.data(), nullptr, base);
+        const std::sub_match match = matches[i];
+        std::uint16_t base = match.str().starts_with("0x") ? 16 : match.str().starts_with("0b") ? 2 : 10;
+        std::uint64_t val = std::stoull(match, nullptr, base);
         std::uint32_t bits = selected_template.bits[i - 1];
         if ((val & ~(~0x0ull << bits)) != val)
         {
@@ -281,10 +280,9 @@ void UrlEncoder::AddTemplate(const std::string& new_template, const bool overwri
     try
     {
         // Get the pen group value
-        std::string_view match;
-        match = matches[1].str();
-        std::uint16_t base = match.starts_with("0x") ? 16 : match.starts_with("0b") ? 2 : 10;
-        pen_value = std::stoul(match.data(), nullptr, base);
+        const std::ssub_match match = matches[1];
+        std::uint16_t base = match.str().starts_with("0x") ? 16 : match.str().starts_with("0b") ? 2 : 10;
+        pen_value = std::stoul(match.str(), nullptr, base);
     }
     catch (std::out_of_range& ex)
     {
