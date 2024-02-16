@@ -57,7 +57,8 @@ class UrlEncoder
         std::vector<std::uint32_t> bits;
     } url_template;
 
-    typedef std::map<std::int16_t, url_template> template_map;
+    // a given sub-pen can have multiple templates as long as they match the common prefix
+    typedef std::map<std::int16_t, std::vector<url_template>> template_map;
 
     // Alias for url templates
     typedef std::map<std::uint64_t, template_map> pen_template_map;
