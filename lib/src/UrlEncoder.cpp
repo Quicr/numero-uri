@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <regex>
+#include <numeric>
 
 constexpr size_t MaxEncodeSize = sizeof(quicr::Name) * 8;
 
@@ -169,6 +170,7 @@ std::string UrlEncoder::DecodeUrl(const quicr::Namespace& code)
     }
 
     for (const auto& url_regex: temp) {
+        auto temp_bit_distribution = bit_distribution;
         // Get the regex
         std::string reg = url_regex.url;
         std::string decoded;
@@ -223,9 +225,14 @@ std::string UrlEncoder::DecodeUrl(const quicr::Namespace& code)
             ++idx;
         }
 
-        const size_t num_pens = bit_distribution.size();
-        bit_distribution.insert(bit_distribution.end(), url_regex.bits.begin(), url_regex.bits.end());
-        auto decoded_nums = quicr::HexEndec<MaxEncodeSize>::Decode(bit_distribution, code);
+        const size_t num_pens = temp_bit_distribution.size();
+        temp_bit_distribution.insert(temp_bit_distribution.end(), url_regex.bits.begin(), url_regex.bits.end());
+        // check if the bits match the uri procoded
+        auto all_bits = std::accumulate(temp_bit_distribution.begin(), temp_bit_distribution.end(), 0);
+        if (all_bits != code.length()) {
+            continue;
+        }
+        auto decoded_nums = quicr::HexEndec<MaxEncodeSize>::Decode(temp_bit_distribution, code);
 
         size_t str_offset = 0;
         size_t insert_idx;
@@ -277,10 +284,10 @@ void UrlEncoder::AddTemplate(const std::string& new_template, const bool overwri
     std::size_t end = 0;
 
     // Start the regex match string
-    temp.second.url = '^';
+    url.url = '^';
 
     // Put everything up to the first option into the regex
-    temp.second.url += new_template.substr(0, start - 1);
+    url.url += new_template.substr(0, start - 1);
 
     // Get the pen from the string
     end = new_template.find('>', start);
